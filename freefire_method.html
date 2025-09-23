@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Panel - Methods</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f9;
+            margin: 0;
+            padding: 0;
+        }
+        .container {
+            max-width: 600px;
+            margin: 20px auto;
+            padding: 20px;
+            background-color: #fff;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+        .header {
+            display: flex;
+            align-items: center;
+            padding-bottom: 20px;
+            border-bottom: 1px solid #ddd;
+            margin-bottom: 20px;
+        }
+        .header .back-btn {
+            background: none;
+            border: none;
+            font-size: 24px;
+            cursor: pointer;
+            margin-right: 15px;
+        }
+        .header h1 {
+            font-size: 24px;
+            margin: 0;
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        .form-group input {
+            width: calc(100% - 20px);
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+        }
+        .submit-btn {
+            width: 100%;
+            padding: 10px;
+            background-color: #28a745;
+            color: #fff;
+            border: none;
+            border-radius: 5px;
+            font-size: 16px;
+            cursor: pointer;
+        }
+        .submit-btn:hover {
+            background-color: #218838;
+        }
+        .method-list {
+            margin-top: 30px;
+        }
+        .method-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px;
+            border-bottom: 1px solid #eee;
+        }
+        .method-item:last-child {
+            border-bottom: none;
+        }
+        .method-details {
+            font-size: 16px;
+        }
+        .delete-btn {
+            background-color: #dc3545;
+            color: #fff;
+            border: none;
+            padding: 5px 10px;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        .delete-btn:hover {
+            background-color: #c82333;
+        }
+        .message {
+            margin-top: 15px;
+            padding: 10px;
+            border-radius: 5px;
+            display: none;
+        }
+        .message.success {
+            background-color: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div class="header">
+        <button class="back-btn" onclick="history.back()">&#x2190;</button>
+        <h1>Manage Payment Methods</h1>
+    </div>
+
+    <div class="method-form">
+        <h2>Add New Method</h2>
+        <div class="form-group">
+            <label for="method-name">Method Name</label>
+            <input type="text" id="method-name" placeholder="e.g., bKash, Nagad" required>
+        </div>
+        <div class="form-group">
+            <label for="method-number">Number</label>
+            <input type="text" id="method-number" placeholder="e.g., 01xxxxxxxx" required>
+        </div>
+        <button id="add-method-btn" class="submit-btn">Add Method</button>
+    </div>
+
+    <div class="method-list">
+        <h2>Existing Methods</h2>
+        <div id="methods-container">
+            </div>
+    </div>
+
+    <div id="message" class="message"></div>
+</div>
+
+<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
+
+<script>
+    const firebaseConfig = {
+      apiKey: "AIzaSyCS5HN0yT3e7el75fBc2HLcLmTnrcQZ7bc",
+      authDomain: "exsurvey-1c78a.firebaseapp.com",
+      databaseURL: "https://exsurvey-1c78a-default-rtdb.firebaseio.com",
+      projectId: "exsurvey-1c78a",
+      storageBucket: "exsurvey-1c78a.firebasestorage.app",
+      messagingSenderId: "754959615386",
+      appId: "1:754959615386:web:65c390db232a7dafd3e623",
+      measurementId: "G-8SQNS2DLBT"
+    };
+
+    firebase.initializeApp(firebaseConfig);
+    const database = firebase.database();
+    const methodsRef = database.ref('freefire_method');
+
+    // Function to load and display existing methods
+    function loadMethods() {
+        methodsRef.on('value', (snapshot) => {
+            const container = document.getElementById('methods-container');
+            container.innerHTML = '';
+            snapshot.forEach((childSnapshot) => {
+                const methodKey = childSnapshot.key;
+                const methodData = childSnapshot.val();
+
+                const item = document.createElement('div');
+                item.className = 'method-item';
+                item.innerHTML = `
+                    <div class="method-details">
+                        <strong>Name:</strong> ${methodData.name}<br>
+                        <strong>Number:</strong> ${methodData.number}
+                    </div>
+                    <button class="delete-btn" data-key="${methodKey}">Delete</button>
+                `;
+                container.appendChild(item);
+            });
+        });
+    }
+
+    // Function to add a new method
+    document.getElementById('add-method-btn').addEventListener('click', () => {
+        const name = document.getElementById('method-name').value.trim();
+        const number = document.getElementById('method-number').value.trim();
+        const messageBox = document.getElementById('message');
+
+        if (name === '' || number === '') {
+            messageBox.style.display = 'block';
+            messageBox.className = 'message';
+            messageBox.style.backgroundColor = '#f8d7da';
+            messageBox.style.color = '#721c24';
+            messageBox.style.border = '1px solid #f5c6cb';
+            messageBox.innerText = 'Please fill out all fields.';
+            return;
+        }
+
+        const newMethod = {
+            name: name,
+            number: number
+        };
+
+        methodsRef.push(newMethod)
+            .then(() => {
+                messageBox.style.display = 'block';
+                messageBox.className = 'message success';
+                messageBox.innerText = 'Method added successfully!';
+                document.getElementById('method-name').value = '';
+                document.getElementById('method-number').value = '';
+            })
+            .catch((error) => {
+                messageBox.style.display = 'block';
+                messageBox.className = 'message';
+                messageBox.style.backgroundColor = '#f8d7da';
+                messageBox.style.color = '#721c24';
+                messageBox.style.border = '1px solid #f5c6cb';
+                messageBox.innerText = `Error adding method: ${error.message}`;
+            });
+    });
+
+    // Function to handle method deletion
+    document.getElementById('methods-container').addEventListener('click', (event) => {
+        if (event.target.classList.contains('delete-btn')) {
+            const methodKey = event.target.getAttribute('data-key');
+            methodsRef.child(methodKey).remove()
+                .then(() => {
+                    const messageBox = document.getElementById('message');
+                    messageBox.style.display = 'block';
+                    messageBox.className = 'message success';
+                    messageBox.innerText = 'Method deleted successfully!';
+                })
+                .catch((error) => {
+                    const messageBox = document.getElementById('message');
+                    messageBox.style.display = 'block';
+                    messageBox.className = 'message';
+                    messageBox.style.backgroundColor = '#f8d7da';
+                    messageBox.style.color = '#721c24';
+                    messageBox.style.border = '1px solid #f5c6cb';
+                    messageBox.innerText = `Error deleting method: ${error.message}`;
+                });
+        }
+    });
+
+    // Initial load
+    window.onload = loadMethods;
+</script>
+
+</body>
+</html>

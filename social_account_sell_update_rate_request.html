@@ -1,0 +1,324 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Sell Panel</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f0f2f5;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            min-height: 100vh;
+            margin: 0;
+            padding: 20px;
+        }
+        .container {
+            background-color: #fff;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+            width: 100%;
+            max-width: 900px;
+        }
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 25px;
+            border-bottom: 2px solid #ddd;
+            padding-bottom: 15px;
+            position: relative;
+        }
+        .header h1 {
+            font-size: 28px;
+            color: #333;
+            margin: 0;
+            flex-grow: 1;
+            text-align: center;
+        }
+        .back-btn {
+            font-size: 24px;
+            color: #555;
+            text-decoration: none;
+            position: absolute;
+            left: 0;
+            top: 50%;
+            transform: translateY(-50%);
+        }
+        .section-header {
+            text-align: center;
+            margin: 40px 0 20px;
+            font-size: 24px;
+            color: #444;
+            border-bottom: 2px solid #eee;
+            padding-bottom: 10px;
+        }
+        .order-list-container {
+            margin-top: 20px;
+        }
+        .order-item {
+            background-color: #f9f9f9;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+            margin-bottom: 15px;
+            border-left: 5px solid #28a745;
+        }
+        .order-item p {
+            margin: 5px 0;
+            color: #666;
+        }
+        .order-item h4 {
+            margin-top: 0;
+            margin-bottom: 10px;
+            color: #333;
+        }
+        .action-buttons {
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+            margin-top: 10px;
+        }
+        .approve-btn, .reject-btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: bold;
+            color: white;
+            transition: background-color 0.3s ease;
+        }
+        .approve-btn {
+            background-color: #007bff;
+        }
+        .approve-btn:hover {
+            background-color: #0056b3;
+        }
+        .reject-btn {
+            background-color: #dc3545;
+        }
+        .reject-btn:hover {
+            background-color: #c82333;
+        }
+        .price-update-form {
+            background-color: #f1f1f1;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 30px;
+        }
+        .price-update-form label {
+            font-weight: bold;
+        }
+        .price-update-form input, .price-update-form select {
+            width: 100%;
+            padding: 10px;
+            margin-bottom: 10px;
+            border-radius: 5px;
+            border: 1px solid #ccc;
+        }
+        .price-update-form button {
+            width: 100%;
+            padding: 12px;
+            background-color: #28a745;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        .status-message {
+            margin-top: 20px;
+            text-align: center;
+            font-size: 16px;
+            font-weight: bold;
+            padding: 10px;
+            border-radius: 5px;
+            display: none;
+        }
+        .status-message.success {
+            background-color: #d4edda;
+            color: #155724;
+        }
+        .status-message.error {
+            background-color: #f8d7da;
+            color: #721c24;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div class="header">
+        <a href="#" class="back-btn" onclick="goBack()">&#8592;</a>
+        <h1>Admin Sell Panel</h1>
+    </div>
+
+    <div id="status-message" class="status-message"></div>
+
+    <h2 class="section-header">Update Sell Prices</h2>
+    <div class="price-update-form">
+        <form id="price-update-form">
+            <label for="price-account-type">Select Account Type</label>
+            <select id="price-account-type" required>
+                <option value="">-- Select --</option>
+                <option value="Gmail">Gmail</option>
+                <option value="Facebook">Facebook</option>
+                <option value="Instagram">Instagram</option>
+                <option value="Telegram">Telegram</option>
+                <option value="WhatsApp">WhatsApp</option>
+                <option value="LinkedIn">LinkedIn</option>
+                <option value="Skype">Skype</option>
+                <option value="Tiktok">Tiktok</option>
+                <option value="SEO YouTube">SEO YouTube</option>
+                <option value="Textnow">Textnow</option>
+            </select>
+            <label for="sell-price-input">Price Per Account ($)</label>
+            <input type="number" id="sell-price-input" min="0.01" step="0.01" required>
+            <button type="submit">Update Price</button>
+        </form>
+    </div>
+
+    <h2 class="section-header">Pending Sell Requests</h2>
+    <div id="sell-request-list" class="order-list-container">
+        <p style="text-align: center; color: #888;">No pending sell requests.</p>
+    </div>
+</div>
+
+<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
+<script>
+    const firebaseConfig = {
+      apiKey: "AIzaSyCS5HN0yT3e7el75fBc2HLcLmTnrcQZ7bc",
+      authDomain: "exsurvey-1c78a.firebaseapp.com",
+      databaseURL: "https://exsurvey-1c78a-default-rtdb.firebaseio.com",
+      projectId: "exsurvey-1c78a",
+      storageBucket: "exsurvey-1c78a.firebasestorage.app",
+      messagingSenderId: "754959615386",
+      appId: "1:754959615386:web:65c390db232a7dafd3e623",
+      measurementId: "G-8SQNS2DLBT"
+    };
+
+    firebase.initializeApp(firebaseConfig);
+    const database = firebase.database();
+    
+    const sellRequestList = document.getElementById('sell-request-list');
+    const priceUpdateForm = document.getElementById('price-update-form');
+    const priceAccountTypeSelect = document.getElementById('price-account-type');
+    const sellPriceInput = document.getElementById('sell-price-input');
+    const statusMessage = document.getElementById('status-message');
+
+    function showMessage(message, type) {
+        statusMessage.textContent = message;
+        statusMessage.className = `status-message ${type}`;
+        statusMessage.style.display = 'block';
+        setTimeout(() => {
+            statusMessage.style.display = 'none';
+        }, 5000); // Hide after 5 seconds
+    }
+    
+    function loadPendingSellRequests() {
+        sellRequestList.innerHTML = '';
+        database.ref('social_account_sell_history').orderByChild('status').equalTo('Pending').once('value', (snapshot) => {
+            const requests = snapshot.val();
+            let foundRequests = false;
+            if (requests) {
+                const requestKeys = Object.keys(requests).reverse();
+                requestKeys.forEach(key => {
+                    const request = requests[key];
+                    if (request.action === 'Sell') {
+                        foundRequests = true;
+                        const requestItem = document.createElement('div');
+                        requestItem.className = 'order-item';
+                        requestItem.innerHTML = `
+                            <h4>Sell Request ID: ${key}</h4>
+                            <p><strong>Username:</strong> ${request.username}</p>
+                            <p><strong>Account Type:</strong> ${request.accountType}</p>
+                            <p><strong>Quantity:</strong> ${request.quantity}</p>
+                            <p><strong>Price Per Unit:</strong> $${request.pricePerUnit.toFixed(2)}</p>
+                            <p><strong>Total Amount:</strong> $${request.totalAmount.toFixed(2)}</p>
+                            <p><strong>WhatsApp No:</strong> ${request.whatsappNo}</p>
+                            <p><strong>Date:</strong> ${new Date(request.timestamp).toLocaleString()}</p>
+                            <div class="action-buttons">
+                                <button class="reject-btn" onclick="rejectSellRequest('${key}')">Reject</button>
+                                <button class="approve-btn" onclick="approveSellRequest('${key}', '${request.userId}', ${request.totalAmount})">Approve</button>
+                            </div>
+                        `;
+                        sellRequestList.appendChild(requestItem);
+                    }
+                });
+            }
+            if (!foundRequests) {
+                sellRequestList.innerHTML = '<p style="text-align: center; color: #888;">No pending sell requests.</p>';
+            }
+        });
+    }
+
+    function approveSellRequest(orderId, userId, totalAmount) {
+        showMessage('Approving request and updating user balance...', 'info');
+        
+        const userRef = database.ref('users/' + userId);
+        userRef.once('value', (snapshot) => {
+            const userData = snapshot.val();
+            const currentBalance = userData && userData.balance !== undefined ? userData.balance : 0;
+            const newBalance = currentBalance + totalAmount;
+            
+            userRef.update({ balance: newBalance })
+                .then(() => {
+                    const orderRef = database.ref('social_account_sell_history/' + orderId);
+                    return orderRef.update({ status: 'Approved' });
+                })
+                .then(() => {
+                    showMessage('Sell request approved! User balance updated and order status changed.', 'success');
+                    loadPendingSellRequests();
+                })
+                .catch(error => {
+                    showMessage('An error occurred during approval: ' + error.message, 'error');
+                    console.error("Approval error:", error);
+                });
+        });
+    }
+
+    // New function to reject a sell request
+    function rejectSellRequest(orderId) {
+        showMessage('Rejecting sell request...', 'info');
+
+        const orderRef = database.ref('social_account_sell_history/' + orderId);
+        orderRef.update({ status: 'Rejected' })
+            .then(() => {
+                showMessage('Sell request rejected successfully.', 'success');
+                loadPendingSellRequests();
+            })
+            .catch(error => {
+                showMessage('An error occurred during rejection: ' + error.message, 'error');
+                console.error("Rejection error:", error);
+            });
+    }
+    
+    priceUpdateForm.addEventListener('submit', (e) => {
+        e.preventDefault();
+        const accountType = priceAccountTypeSelect.value;
+        const price = parseFloat(sellPriceInput.value);
+        if (!accountType || isNaN(price)) {
+            showMessage("Please select an account type and enter a valid price.", 'error');
+            return;
+        }
+        database.ref('social_account_sell/' + accountType).set({ price: price })
+            .then(() => {
+                showMessage('Sell price updated successfully!', 'success');
+                sellPriceInput.value = '';
+            })
+            .catch(error => {
+                showMessage('Error updating price: ' + error.message, 'error');
+            });
+    });
+
+    loadPendingSellRequests();
+
+    function goBack() {
+        window.history.back();
+    }
+</script>
+</body>
+</html>

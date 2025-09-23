@@ -1,0 +1,375 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin - Manage Withdraw Methods</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f0f2f5;
+            padding: 20px;
+        }
+        .container {
+            background-color: #fff;
+            padding: 25px;
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+            max-width: 800px;
+            margin: 0 auto;
+            position: relative;
+        }
+        h1 {
+            text-align: center;
+            color: #333;
+            margin-bottom: 20px;
+        }
+        .form-section {
+            background-color: #f9f9f9;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            border: 1px solid #ddd;
+        }
+        .form-section h2 {
+            margin-top: 0;
+            color: #555;
+            text-align: center;
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+            color: #555;
+        }
+        input, select {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            box-sizing: border-box;
+            font-size: 16px;
+        }
+        .btn-submit {
+            background-color: #007bff;
+            color: white;
+            padding: 12px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            width: 100%;
+            font-size: 16px;
+            font-weight: bold;
+        }
+        .btn-submit:hover {
+            background-color: #0056b3;
+        }
+        .method-list-section {
+            border: 1px solid #ddd;
+            padding: 20px;
+            border-radius: 8px;
+        }
+        .method-list-section h2 {
+            text-align: center;
+            color: #555;
+            margin-top: 0;
+        }
+        .method-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 15px;
+            border-bottom: 1px solid #eee;
+        }
+        .method-item:last-child {
+            border-bottom: none;
+        }
+        .method-details {
+            flex-grow: 1;
+        }
+        .method-details p {
+            margin: 0;
+            color: #333;
+            word-wrap: break-word; /* To handle long account numbers */
+        }
+        .method-actions button {
+            background-color: #f44336;
+            color: white;
+            border: none;
+            padding: 6px 12px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            margin-left: 10px;
+        }
+        .method-actions .edit-btn {
+            background-color: #ff9800;
+        }
+        .method-actions .edit-btn:hover {
+            background-color: #e68a00;
+        }
+        .method-actions button:hover {
+            background-color: #da190b;
+        }
+        .message {
+            text-align: center;
+            font-size: 14px;
+            margin-top: 15px;
+            padding: 10px;
+            border-radius: 5px;
+        }
+        .message.success {
+            background-color: #d4edda;
+            color: #155724;
+        }
+        .message.error {
+            background-color: #f8d7da;
+            color: #721c24;
+        }
+        .back-btn {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            font-size: 24px;
+            color: #555;
+            text-decoration: none;
+        }
+        .fee-group {
+            display: flex;
+            gap: 10px;
+        }
+        .fee-group .form-group {
+            flex: 1;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <a href="#" class="back-btn" onclick="goBack()">&#8592; Back</a>
+    <h1>Manage Withdrawal Methods</h1>
+
+    <div class="form-section">
+        <h2 id="form-title">Add New Method</h2>
+        <form id="methodForm">
+            <input type="hidden" id="methodKey">
+            <div id="messageArea" class="message" style="display: none;"></div>
+            <div class="form-group">
+                <label for="methodName">Method Name (e.g., Bkash, Nagad, Binance)</label>
+                <input type="text" id="methodName" placeholder="Enter method name" required>
+            </div>
+            <div class="form-group">
+                <label for="accountNumber">Account Number/ID</label>
+                <input type="text" id="accountNumber" placeholder="Enter account number or ID" required>
+            </div>
+            <div class="form-group">
+                <label for="currencySelect">Currency</label>
+                <select id="currencySelect" required>
+                    <option value="">Select Currency</option>
+                    <option value="USD">USD</option>
+                    <option value="BDT">BDT</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="feeType">Fee Type</label>
+                <select id="feeType" required>
+                    <option value="fixed">Fixed</option>
+                    <option value="percent">Percentage</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="feeValue">Fee Value</label>
+                <input type="number" id="feeValue" step="0.01" placeholder="Enter fee value" required>
+            </div>
+            <button type="submit" class="btn-submit" id="submitBtn">Add Method</button>
+        </form>
+    </div>
+
+    <div class="method-list-section">
+        <h2>Existing Methods</h2>
+        <div id="methodList">
+            <p style="text-align: center;">Loading methods...</p>
+        </div>
+    </div>
+</div>
+
+<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
+<script>
+    const firebaseConfig = {
+      apiKey: "AIzaSyCS5HN0yT3e7el75fBc2HLcLmTnrcQZ7bc",
+      authDomain: "exsurvey-1c78a.firebaseapp.com",
+      databaseURL: "https://exsurvey-1c78a-default-rtdb.firebaseio.com",
+      projectId: "exsurvey-1c78a",
+      storageBucket: "exsurvey-1c78a.firebasestorage.app",
+      messagingSenderId: "754959615386",
+      appId: "1:754959615386:web:65c390db232a7dafd3e623",
+      measurementId: "G-8SQNS2DLBT"
+    };
+
+    firebase.initializeApp(firebaseConfig);
+    const database = firebase.database();
+    
+    // UI Elements
+    const methodForm = document.getElementById('methodForm');
+    const methodKeyInput = document.getElementById('methodKey');
+    const methodNameInput = document.getElementById('methodName');
+    const accountNumberInput = document.getElementById('accountNumber');
+    const currencySelect = document.getElementById('currencySelect');
+    const feeTypeSelect = document.getElementById('feeType');
+    const feeValueInput = document.getElementById('feeValue');
+    const submitBtn = document.getElementById('submitBtn');
+    const formTitle = document.getElementById('form-title');
+    const methodList = document.getElementById('methodList');
+    const messageArea = document.getElementById('messageArea');
+
+    const withdrawMethodsRef = database.ref('payment_methods/withdraw_deposit_method');
+
+    // --- Message Display Function ---
+    function showMessage(message, type) {
+        messageArea.textContent = message;
+        messageArea.className = `message ${type}`;
+        messageArea.style.display = 'block';
+        setTimeout(() => {
+            messageArea.style.display = 'none';
+        }, 5000); // Hide the message after 5 seconds
+    }
+
+    // --- CRUD Operations ---
+
+    // READ: Fetch and display methods from Firebase
+    function fetchMethods() {
+        withdrawMethodsRef.on('value', (snapshot) => {
+            const methods = snapshot.val();
+            methodList.innerHTML = '';
+            if (methods) {
+                Object.keys(methods).forEach(key => {
+                    const method = methods[key];
+                    const feeString = method.fee.type === 'fixed' ? `$${method.fee.value.toFixed(2)}` : `${method.fee.value}%`;
+                    const methodItem = document.createElement('div');
+                    methodItem.classList.add('method-item');
+                    methodItem.innerHTML = `
+                        <div class="method-details">
+                            <p><strong>Method:</strong> ${method.name}</p>
+                            <p><strong>Account:</strong> ${method.account}</p>
+                            <p><strong>Currency:</strong> ${method.currency}</p>
+                            <p><strong>Fee:</strong> ${feeString}</p>
+                        </div>
+                        <div class="method-actions">
+                            <button class="edit-btn" 
+                                onclick="editMethod(
+                                    '${key}', 
+                                    '${method.name}', 
+                                    '${method.account}', 
+                                    '${method.currency}', 
+                                    '${method.fee.type}', 
+                                    ${method.fee.value}
+                                )">Edit</button>
+                            <button class="delete-btn" onclick="deleteMethod('${key}')">Delete</button>
+                        </div>
+                    `;
+                    methodList.appendChild(methodItem);
+                });
+            } else {
+                methodList.innerHTML = '<p style="text-align: center;">No withdrawal methods found.</p>';
+            }
+        });
+    }
+
+    // CREATE & UPDATE: Handle form submission
+    methodForm.addEventListener('submit', (e) => {
+        e.preventDefault();
+        
+        const key = methodKeyInput.value;
+        const name = methodNameInput.value;
+        const account = accountNumberInput.value;
+        const currency = currencySelect.value;
+        const feeType = feeTypeSelect.value;
+        const feeValue = parseFloat(feeValueInput.value);
+
+        if (isNaN(feeValue)) {
+            showMessage("Please enter a valid number for Fee Value.", 'error');
+            return;
+        }
+
+        const methodData = {
+            name: name,
+            account: account,
+            currency: currency,
+            fee: {
+                type: feeType,
+                value: feeValue
+            }
+        };
+
+        if (key) {
+            // UPDATE: Edit an existing method
+            withdrawMethodsRef.child(key).update(methodData)
+                .then(() => {
+                    showMessage('Method updated successfully!', 'success');
+                    resetForm();
+                })
+                .catch(error => {
+                    showMessage('Failed to update method: ' + error.message, 'error');
+                });
+        } else {
+            // CREATE: Add a new method
+            withdrawMethodsRef.push(methodData)
+                .then(() => {
+                    showMessage('Method added successfully!', 'success');
+                    resetForm();
+                })
+                .catch(error => {
+                    showMessage('Failed to add method: ' + error.message, 'error');
+                });
+        }
+    });
+
+    // DELETE: Delete a method
+    function deleteMethod(key) {
+        withdrawMethodsRef.child(key).remove()
+            .then(() => {
+                showMessage('Method deleted successfully!', 'success');
+            })
+            .catch(error => {
+                showMessage('Failed to delete method: ' + error.message, 'error');
+            });
+    }
+
+    // EDIT: Load method data into the form for editing
+    function editMethod(key, name, account, currency, feeType, feeValue) {
+        methodKeyInput.value = key;
+        methodNameInput.value = name;
+        accountNumberInput.value = account;
+        currencySelect.value = currency;
+        feeTypeSelect.value = feeType;
+        feeValueInput.value = feeValue;
+        
+        formTitle.textContent = 'Edit Method';
+        submitBtn.textContent = 'Update Method';
+        showMessage("Editing a method. Make your changes and click 'Update Method'.", 'info');
+    }
+
+    // Reset form to add new method state
+    function resetForm() {
+        methodForm.reset();
+        methodKeyInput.value = '';
+        formTitle.textContent = 'Add New Method';
+        submitBtn.textContent = 'Add Method';
+    }
+
+    // Back button functionality
+    function goBack() {
+        window.history.back();
+    }
+
+    // Initial fetch of methods
+    fetchMethods();
+</script>
+
+</body>
+  </html>

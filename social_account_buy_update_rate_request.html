@@ -1,0 +1,478 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Panel</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f0f2f5;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            min-height: 100vh;
+            margin: 0;
+            padding: 20px;
+        }
+        .container {
+            background-color: #fff;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+            width: 100%;
+            max-width: 900px;
+        }
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 25px;
+            border-bottom: 2px solid #ddd;
+            padding-bottom: 15px;
+            position: relative;
+        }
+        .header h1 {
+            font-size: 28px;
+            color: #333;
+            margin: 0;
+            flex-grow: 1;
+            text-align: center;
+        }
+        .back-btn {
+            font-size: 24px;
+            color: #555;
+            text-decoration: none;
+            position: absolute;
+            left: 0;
+            top: 50%;
+            transform: translateY(-50%);
+        }
+        .form-group {
+            margin-bottom: 20px;
+        }
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: bold;
+            color: #555;
+        }
+        select, input[type="number"], input[type="text"], textarea {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            box-sizing: border-box;
+            font-size: 16px;
+        }
+        textarea {
+            resize: vertical;
+        }
+        .btn-update {
+            background-color: #007bff;
+            color: white;
+            padding: 15px 25px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 18px;
+            width: 100%;
+            transition: background-color 0.3s ease;
+        }
+        .btn-update:hover {
+            background-color: #0056b3;
+        }
+        .status-message {
+            margin-top: 20px;
+            text-align: center;
+            font-size: 16px;
+            font-weight: bold;
+            padding: 10px;
+            border-radius: 5px;
+        }
+        .status-message.success {
+            background-color: #d4edda;
+            color: #155724;
+        }
+        .status-message.error {
+            background-color: #f8d7da;
+            color: #721c24;
+        }
+        .section-header {
+            text-align: center;
+            margin: 40px 0 20px;
+            font-size: 24px;
+            color: #444;
+            border-bottom: 2px solid #eee;
+            padding-bottom: 10px;
+        }
+        .account-cards-container {
+            display: grid;
+            gap: 20px;
+            margin-top: 20px;
+        }
+        .account-card {
+            background-color: #f9f9f9;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-weight: bold;
+        }
+        .card-header h3 {
+            margin: 0;
+            font-size: 18px;
+            color: #333;
+        }
+        .card-header span {
+            color: #007bff;
+        }
+        .card-body p {
+            margin: 0;
+            color: #666;
+            line-height: 1.5;
+        }
+        .card-footer {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 10px;
+        }
+        .card-footer span {
+            font-weight: bold;
+            color: #28a745;
+        }
+        .btn-edit {
+            background-color: #ffc107;
+            color: #333;
+            padding: 8px 15px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: background-color 0.3s ease;
+        }
+        .btn-edit:hover {
+            background-color: #e0a800;
+        }
+        .order-list-container {
+            margin-top: 20px;
+        }
+        .order-item {
+            background-color: #f9f9f9;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+            margin-bottom: 15px;
+            border-left: 5px solid #007bff;
+        }
+        .order-item h4 {
+            margin-top: 0;
+            margin-bottom: 10px;
+            color: #333;
+        }
+        .order-item p {
+            margin: 5px 0;
+            color: #666;
+        }
+        .action-buttons {
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+            margin-top: 10px;
+        }
+        .approve-btn, .reject-btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: bold;
+            color: white;
+            transition: background-color 0.3s ease;
+        }
+        .approve-btn {
+            background-color: #28a745;
+        }
+        .approve-btn:hover {
+            background-color: #218838;
+        }
+        .reject-btn {
+            background-color: #dc3545;
+        }
+        .reject-btn:hover {
+            background-color: #c82333;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div class="header">
+        <a href="#" class="back-btn" onclick="goBack()">&#8592;</a>
+        <h1>Admin Panel</h1>
+    </div>
+
+    <h2 class="section-header">Update/Add Account</h2>
+    <form id="adminForm">
+        <div id="status-message" class="status-message" style="display: none;"></div>
+        <div class="form-group">
+            <label for="account-type">Select Account Type</label>
+            <select id="account-type" onchange="loadAccounts()" required>
+                <option value="">-- Select --</option>
+                <option value="Gmail">Gmail</option>
+                <option value="Facebook">Facebook</option>
+                <option value="Instagram">Instagram</option>
+                <option value="Telegram">Telegram</option>
+                <option value="WhatsApp">WhatsApp</option>
+                <option value="LinkedIn">LinkedIn</option>
+                <option value="Skype">Skype</option>
+                <option value="Tiktok">Tiktok</option>
+                <option value="SEO YouTube">SEO YouTube</option>
+                <option value="Textnow">Textnow</option>
+            </select>
+        </div>
+        
+        <div class="form-group">
+            <label for="account-id">Account ID (e.g., account1, fb_acc_1)</label>
+            <input type="text" id="account-id" placeholder="Enter a unique ID or select a card to edit" required>
+        </div>
+
+        <div class="form-group">
+            <label for="price">Price ($)</label>
+            <input type="number" id="price" min="0" step="0.01" required>
+        </div>
+
+        <div class="form-group">
+            <label for="stock">Stock</label>
+            <input type="number" id="stock" min="0" required>
+        </div>
+
+        <div class="form-group">
+            <label for="description">Description</label>
+            <textarea id="description" rows="4" required></textarea>
+        </div>
+
+        <button type="submit" class="btn-update">Update/Add Account</button>
+    </form>
+
+    <h2 class="section-header">Available Accounts</h2>
+    <div id="account-cards-container" class="account-cards-container">
+        <p style="text-align: center; color: #888;">Select an account type to see the available accounts.</p>
+    </div>
+    
+    <h2 class="section-header">Pending Buy Requests</h2>
+    <div id="buy-request-list" class="order-list-container">
+        <p style="text-align: center; color: #888;">No pending buy requests.</p>
+    </div>
+
+</div>
+
+<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
+<script>
+    const firebaseConfig = {
+      apiKey: "AIzaSyCS5HN0yT3e7el75fBc2HLcLmTnrcQZ7bc",
+      authDomain: "exsurvey-1c78a.firebaseapp.com",
+      databaseURL: "https://exsurvey-1c78a-default-rtdb.firebaseio.com",
+      projectId: "exsurvey-1c78a",
+      storageBucket: "exsurvey-1c78a.firebasestorage.app",
+      messagingSenderId: "754959615386",
+      appId: "1:754959615386:web:65c390db232a7dafd3e623",
+      measurementId: "G-8SQNS2DLBT"
+    };
+
+    firebase.initializeApp(firebaseConfig);
+    const database = firebase.database();
+
+    const adminForm = document.getElementById('adminForm');
+    const accountTypeSelect = document.getElementById('account-type');
+    const accountIdInput = document.getElementById('account-id');
+    const priceInput = document.getElementById('price');
+    const stockInput = document.getElementById('stock');
+    const descriptionInput = document.getElementById('description');
+    const statusMessage = document.getElementById('status-message');
+    const accountCardsContainer = document.getElementById('account-cards-container');
+    const buyRequestList = document.getElementById('buy-request-list');
+
+    // Function to show messages on the page
+    function showMessage(message, type) {
+        statusMessage.textContent = message;
+        statusMessage.className = `status-message ${type}`;
+        statusMessage.style.display = 'block';
+        setTimeout(() => {
+            statusMessage.style.display = 'none';
+        }, 5000); // Hide after 5 seconds
+    }
+
+    // Function to load accounts based on selected type
+    function loadAccounts() {
+        const selectedType = accountTypeSelect.value;
+        accountCardsContainer.innerHTML = '';
+        if (!selectedType) {
+            accountCardsContainer.innerHTML = '<p style="text-align: center; color: #888;">Select an account type to see the available accounts.</p>';
+            return;
+        }
+
+        database.ref('social_account_buy/' + selectedType).once('value', (snapshot) => {
+            const accounts = snapshot.val();
+            if (accounts) {
+                Object.keys(accounts).forEach(accountId => {
+                    const account = accounts[accountId];
+                    const card = document.createElement('div');
+                    card.className = 'account-card';
+                    card.innerHTML = `
+                        <div class="card-header">
+                            <h3>ID: ${accountId}</h3>
+                            <span>Stock: ${account.stock} p</span>
+                        </div>
+                        <p><strong>Price:</strong> $${account.price.toFixed(2)}</p>
+                        <p><strong>Description:</strong> ${account.description}</p>
+                        <div class="card-footer">
+                            <button class="btn-edit" onclick="editAccount('${accountId}')">Edit</button>
+                        </div>
+                    `;
+                    accountCardsContainer.appendChild(card);
+                });
+            } else {
+                accountCardsContainer.innerHTML = `<p style="text-align: center; color: #888;">No accounts found for this type. You can add one using the form above.</p>`;
+            }
+        });
+    }
+
+    // Function to populate form fields for editing
+    function editAccount(accountId) {
+        const selectedType = accountTypeSelect.value;
+        if (!selectedType) {
+            showMessage("Please select an account type first.", 'error');
+            return;
+        }
+        database.ref('social_account_buy/' + selectedType + '/' + accountId).once('value', (snapshot) => {
+            const account = snapshot.val();
+            if (account) {
+                accountIdInput.value = accountId;
+                priceInput.value = account.price;
+                stockInput.value = account.stock;
+                descriptionInput.value = account.description;
+                showMessage('Data loaded for editing. Make your changes above.', 'success');
+                window.scrollTo({ top: 0, behavior: 'smooth' }); // Scroll to top
+            }
+        });
+    }
+
+    adminForm.addEventListener('submit', (e) => {
+        e.preventDefault();
+
+        const accountType = accountTypeSelect.value;
+        const accountId = accountIdInput.value.trim();
+        const price = parseFloat(priceInput.value);
+        const stock = parseInt(stockInput.value);
+        const description = descriptionInput.value.trim();
+
+        if (!accountType || !accountId || isNaN(price) || isNaN(stock) || !description) {
+            showMessage('Please fill in all fields correctly.', 'error');
+            return;
+        }
+
+        const accountData = {
+            price: price,
+            stock: stock,
+            description: description
+        };
+        
+        database.ref('social_account_buy/' + accountType + '/' + accountId).set(accountData)
+            .then(() => {
+                showMessage('Account updated/added successfully!', 'success');
+                adminForm.reset();
+                loadAccounts(); // Reload cards to show the updated list
+            })
+            .catch(error => {
+                showMessage('Error updating account: ' + error.message, 'error');
+            });
+    });
+
+    // --- New Code for Buy Requests ---
+
+    function loadPendingBuyRequests() {
+        buyRequestList.innerHTML = '';
+        database.ref('social_account_buy_history').orderByChild('status').equalTo('Pending').once('value', (snapshot) => {
+            const requests = snapshot.val();
+            let foundRequests = false;
+            if (requests) {
+                const requestKeys = Object.keys(requests).reverse();
+                requestKeys.forEach(key => {
+                    const request = requests[key];
+                    if (request.action === 'Buy') {
+                        foundRequests = true;
+                        const requestItem = document.createElement('div');
+                        requestItem.className = 'order-item';
+                        requestItem.innerHTML = `
+                            <h4>Buy Request ID: ${key}</h4>
+                            <p><strong>Username:</strong> ${request.username}</p>
+                            <p><strong>Account Type:</strong> ${request.accountType}</p>
+                            <p><strong>Quantity:</strong> ${request.quantity}</p>
+                            <p><strong>Total Amount:</strong> $${request.totalAmount.toFixed(2)}</p>
+                            <p><strong>WhatsApp No:</strong> ${request.whatsappNo}</p>
+                            <p><strong>Date:</strong> ${new Date(request.timestamp).toLocaleString()}</p>
+                            <div class="action-buttons">
+                                <button class="reject-btn" onclick="handleReject('${key}')">Reject</button>
+                                <button class="approve-btn" onclick="handleApprove('${key}')">Approve</button>
+                            </div>
+                        `;
+                        buyRequestList.appendChild(requestItem);
+                    }
+                });
+            }
+            if (!foundRequests) {
+                buyRequestList.innerHTML = '<p style="text-align: center; color: #888;">No pending buy requests.</p>';
+            }
+        });
+    }
+    
+    // Handler for Approve button click
+    function handleApprove(orderId) {
+        showMessage('Approving request...', 'info');
+        database.ref('social_account_buy_history/' + orderId).update({ status: 'Approved' })
+            .then(() => {
+                showMessage('Buy request approved successfully!', 'success');
+                loadPendingBuyRequests();
+            })
+            .catch(error => {
+                showMessage('An error occurred during approval: ' + error.message, 'error');
+                console.error("Approval error:", error);
+            });
+    }
+
+    // Handler for Reject button click
+    function handleReject(orderId) {
+        showMessage('Rejecting request...', 'info');
+        database.ref('social_account_buy_history/' + orderId).update({ status: 'Rejected' })
+            .then(() => {
+                showMessage('Buy request rejected successfully.', 'success');
+                loadPendingBuyRequests();
+            })
+            .catch(error => {
+                showMessage('An error occurred during rejection: ' + error.message, 'error');
+                console.error("Rejection error:", error);
+            });
+    }
+
+    // Load initial data
+    window.onload = function() {
+        loadPendingBuyRequests();
+    };
+
+    function goBack() {
+        window.history.back();
+    }
+</script>
+
+</body>
+</html>

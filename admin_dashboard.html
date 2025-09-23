@@ -1,0 +1,483 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f9;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+        }
+
+        /* Header Styles */
+        .header {
+            background-color: #fff;
+            padding: 15px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+        }
+        .logo {
+            font-size: 24px;
+            font-weight: bold;
+            color: #333;
+        }
+        .header-left {
+            display: flex;
+            align-items: center;
+        }
+        .admin-name {
+            font-size: 18px;
+            font-weight: bold;
+            color: #555;
+            margin-left: 15px;
+        }
+        .header-right {
+            display: flex;
+            align-items: center;
+            position: relative;
+        }
+        .menu-toggle, .profile-toggle, .notification-icon {
+            background: none;
+            border: none;
+            font-size: 24px;
+            cursor: pointer;
+            margin-right: 20px;
+            color: #555;
+            position: relative;
+        }
+        .notification-count {
+            position: absolute;
+            top: -5px;
+            right: 15px;
+            background-color: #ff4d4f;
+            color: white;
+            border-radius: 50%;
+            padding: 2px 6px;
+            font-size: 12px;
+            font-weight: bold;
+            display: none;
+        }
+        .profile-menu {
+            position: absolute;
+            top: 50px;
+            right: 0;
+            background-color: #fff;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            display: none;
+            flex-direction: column;
+            z-index: 100;
+            width: 150px;
+        }
+        .profile-menu button {
+            background: none;
+            border: none;
+            padding: 12px;
+            text-align: left;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        .profile-menu button:hover {
+            background-color: #f0f0f0;
+        }
+
+        /* Sidebar Styles */
+        .sidebar {
+            height: 100%;
+            width: 0;
+            position: fixed;
+            top: 0;
+            left: 0;
+            background-color: #333;
+            overflow-x: hidden;
+            transition: 0.5s;
+            padding-top: 60px;
+            z-index: 999;
+        }
+        .sidebar-header {
+            display: flex;
+            justify-content: flex-end;
+            position: absolute;
+            top: 0;
+            right: 25px;
+        }
+        .close-btn {
+            background: none;
+            border: none;
+            color: #fff;
+            font-size: 36px;
+            cursor: pointer;
+            margin-right: 10px;
+        }
+        .sidebar-link {
+            padding: 15px 25px;
+            text-decoration: none;
+            font-size: 18px;
+            color: #818181;
+            display: block;
+            transition: 0.3s;
+        }
+        .sidebar-link:hover {
+            color: #f1f1f1;
+            background-color: #575757;
+        }
+        
+        /* Main Content Styles */
+        .main-content {
+            padding: 20px;
+            flex-grow: 1;
+        }
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 20px;
+        }
+        .dashboard-button {
+            background-color: #007bff;
+            color: #fff;
+            border: none;
+            border-radius: 8px;
+            padding: 20px;
+            font-size: 18px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: background-color 0.3s, transform 0.2s;
+            text-align: center;
+        }
+        .dashboard-button:hover {
+            background-color: #0056b3;
+            transform: translateY(-5px);
+        }
+
+        /* Marquee Styles */
+        .marquee-container {
+            width: 100%;
+            background-color: #f0f0f0;
+            padding: 10px 0;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+            margin-bottom: 20px;
+        }
+        .marquee-text {
+            font-size: 18px;
+            color: #333;
+            font-weight: bold;
+        }
+
+        /* Modal Styles (for Notifications) */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1001;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgba(0, 0, 0, 0.4);
+            justify-content: center;
+            align-items: center;
+        }
+        .modal-content {
+            background-color: #fefefe;
+            margin: auto;
+            padding: 20px;
+            border: 1px solid #888;
+            border-radius: 10px;
+            width: 80%;
+            max-width: 500px;
+            position: relative;
+        }
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid #eee;
+            padding-bottom: 10px;
+            margin-bottom: 10px;
+        }
+        .close-modal {
+            color: #aaa;
+            font-size: 28px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+        .close-modal:hover, .close-modal:focus {
+            color: #000;
+        }
+        .notification-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+        .notification-item {
+            padding: 10px;
+            border-bottom: 1px solid #eee;
+        }
+        .notification-item:last-child {
+            border-bottom: none;
+        }
+        .notification-item.unread {
+            background-color: #e6f7ff;
+            font-weight: bold;
+        }
+        .notification-title {
+            font-size: 16px;
+            color: #333;
+        }
+        .notification-message {
+            font-size: 14px;
+            color: #666;
+            margin-top: 5px;
+        }
+        .notification-timestamp {
+            font-size: 12px;
+            color: #999;
+            margin-top: 5px;
+            display: block;
+        }
+    </style>
+</head>
+<body>
+
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
+
+    <header class="header">
+        <div class="header-left">
+            <button class="menu-toggle" id="menuToggle">
+                <i class="fas fa-bars"></i>
+            </button>
+            <div class="admin-name" id="adminUsername"></div>
+        </div>
+        <div class="header-right">
+            <button class="notification-icon" id="notificationIcon">
+                <i class="fas fa-bell"></i>
+                <span class="notification-count" id="notificationCount">0</span>
+            </button>
+            <button class="profile-toggle" id="profileToggle">
+                <i class="fas fa-user-circle"></i>
+            </button>
+            <div class="profile-menu" id="profileMenu">
+                <button id="myProfileBtn">My Profile</button>
+                <button id="logoutBtn">Logout</button>
+            </div>
+        </div>
+    </header>
+
+    <div class="sidebar" id="mySidebar">
+        <a href="deposit_request.html" class="sidebar-link"><i class="fas fa-chart-line"></i>Deposit/Withdraw Request</a>
+        <a href="recharge_request.html" class="sidebar-link"><i class="fas fa-users"></i>Mobile Recharge Request</a>
+        <a href="social_media_account_buy_sell_request_button_page.html" class="sidebar-link"><i class="fas fa-money-bill-wave"></i>Buy/Sell Price update and Request Button Page</a>
+        <a href="dollar_buy_sell_request.html" class="sidebar-link"><i class="fas fa-cog"></i>Dollar Buy/Sell Request</a>
+        <a href="job_request.html" class="sidebar-link"><i class="fas fa-file-alt"></i>Jobs Request</a>
+        <a href="topup_request.html" class="sidebar-link"><i class="fas fa-file-alt"></i>TopUp Request</a>
+    </div>
+
+    <main class="main-content">
+        <div class="marquee-container">
+            <marquee class="marquee-text" behavior="scroll" direction="left">Welcome Admin Panel</marquee>
+        </div>
+        <div class="dashboard-grid">
+            <button class="dashboard-button" onclick="window.location.href='index_user_withdraw_task-catagory_total-task_update.html'">Update Index User Task Withdraw</button>
+            <button class="dashboard-button" onclick="window.location.href='user_list_balance_update.html'">View User list Balance Update</button>
+            <button class="dashboard-button" onclick="window.location.href='notification_send.html'">Notification Send</button>
+            <button class="dashboard-button" onclick="window.location.href='support_number_add.html'">Support Number Add</button>
+            <button class="dashboard-button" onclick="window.location.href='withdraw_dollar_rate_update.html'">Withdraw Dollar Rate Update</button>
+            <button class="dashboard-button" onclick="window.location.href='deposit_dollar_rate_update.html'">Deposit Dollar Rate Update</button>
+            <button class="dashboard-button" onclick="window.location.href='withdraw_payment_method_add.html'">Withdraw/Deposit Payment Method Add</button>
+            <button class="dashboard-button" onclick="window.location.href='daimond_package.html'">FreeFire Daimond Package Add</button>
+            <button class="dashboard-button" onclick="window.location.href='dollar_buy_sell_rate_update.html'">Dollar Buy/Sell Rate Update</button>
+            <button class="dashboard-button" onclick="window.location.href='dollar_buy_sell_payment_mathod_add.html'">Dollar Buy/Sell Mathod Add</button>
+            <button class="dashboard-button" onclick="window.location.href='job_add.html'">New Jobs Task Add</button>
+            <button class="dashboard-button" onclick="window.location.href='freefire_method.html'">FreeFire Payment Method Add</button>
+        </div>
+    </main>
+    
+    <div id="notificationModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Notifications</h3>
+                <span class="close-modal" id="closeNotificationModal">&times;</span>
+            </div>
+            <ul id="notificationList" class="notification-list">
+                </ul>
+        </div>
+    </div>
+
+    <script>
+        // Firebase Configuration
+        const firebaseConfig = {
+          apiKey: "AIzaSyCS5HN0yT3e7el75fBc2HLcLmTnrcQZ7bc",
+          authDomain: "exsurvey-1c78a.firebaseapp.com",
+          databaseURL: "https://exsurvey-1c78a-default-rtdb.firebaseio.com",
+          projectId: "exsurvey-1c78a",
+          storageBucket: "exsurvey-1c78a.firebasestorage.app",
+          messagingSenderId: "754959615386",
+          appId: "1:754959615386:web:65c390db232a7dafd3e623",
+          measurementId: "G-8SQNS2DLBT"
+        };
+        
+        firebase.initializeApp(firebaseConfig);
+        const auth = firebase.auth();
+        const database = firebase.database();
+
+        // DOM Elements
+        const menuToggle = document.getElementById('menuToggle');
+        const mySidebar = document.getElementById('mySidebar');
+        const profileToggle = document.getElementById('profileToggle');
+        const profileMenu = document.getElementById('profileMenu');
+        const notificationIcon = document.getElementById('notificationIcon');
+        const notificationCount = document.getElementById('notificationCount');
+        const notificationModal = document.getElementById('notificationModal');
+        const closeNotificationModal = document.getElementById('closeNotificationModal');
+        const notificationList = document.getElementById('notificationList');
+        const logoutBtn = document.getElementById('logoutBtn');
+        const myProfileBtn = document.getElementById('myProfileBtn');
+        const adminUsernameDisplay = document.getElementById('adminUsername');
+
+        // Check user authentication status
+        auth.onAuthStateChanged(user => {
+            if (!user) {
+                // No user is signed in, redirect to login page
+                window.location.href = 'index.html'; 
+            } else {
+                // User is signed in, check if they are an admin
+                database.ref('users/' + user.uid).once('value', snapshot => {
+                    const userData = snapshot.val();
+                    if (!userData || userData.is_admin !== true) {
+                        // User is not an admin, log out and redirect
+                        auth.signOut();
+                        window.location.href = 'index.html';
+                    } else {
+                        // Admin user, load username and notifications
+                        adminUsernameDisplay.textContent = userData.username;
+                        loadNotifications();
+                    }
+                });
+            }
+        });
+
+        // Load and display notifications
+        const loadNotifications = () => {
+            const adminNotificationsRef = database.ref('admin_notification/notifications').orderByChild('timestamp');
+            adminNotificationsRef.on('value', snapshot => {
+                notificationList.innerHTML = '';
+                let unreadCount = 0;
+                const notifications = [];
+                snapshot.forEach(childSnapshot => {
+                    const notification = {
+                        id: childSnapshot.key,
+                        ...childSnapshot.val()
+                    };
+                    notifications.unshift(notification);
+                    if (!notification.read) {
+                        unreadCount++;
+                    }
+                });
+
+                if (unreadCount > 0) {
+                    notificationCount.textContent = unreadCount;
+                    notificationCount.style.display = 'block';
+                } else {
+                    notificationCount.style.display = 'none';
+                }
+                
+                notifications.forEach(notif => {
+                    const li = document.createElement('li');
+                    li.classList.add('notification-item');
+                    if (!notif.read) {
+                        li.classList.add('unread');
+                    }
+                    li.innerHTML = `
+                        <div class="notification-title">${notif.title}</div>
+                        <div class="notification-message">${notif.message}</div>
+                        <div class="notification-timestamp">${new Date(notif.timestamp).toLocaleString()}</div>
+                    `;
+                    notificationList.appendChild(li);
+                });
+            });
+        };
+
+        // Mark all notifications as read
+        const markAllAsRead = () => {
+            const adminNotificationsRef = database.ref('admin_notification/notifications');
+            adminNotificationsRef.once('value', snapshot => {
+                const updates = {};
+                snapshot.forEach(childSnapshot => {
+                    if (!childSnapshot.val().read) {
+                        updates[childSnapshot.key + '/read'] = true;
+                    }
+                });
+                if (Object.keys(updates).length > 0) {
+                    adminNotificationsRef.update(updates)
+                        .then(() => {
+                            console.log("Notifications marked as read.");
+                        })
+                        .catch(error => {
+                            console.error("Error marking notifications as read: ", error);
+                        });
+                }
+            });
+        };
+
+        // Event Listeners
+        menuToggle.addEventListener('click', () => {
+            const isSidebarOpen = mySidebar.style.width === '250px';
+            mySidebar.style.width = isSidebarOpen ? '0' : '250px';
+            menuToggle.innerHTML = isSidebarOpen ? '<i class="fas fa-bars"></i>' : '<i class="fas fa-times"></i>';
+        });
+        
+        // Removed closeSidebar event listener as it's no longer needed
+
+        profileToggle.addEventListener('click', () => {
+            profileMenu.style.display = profileMenu.style.display === 'flex' ? 'none' : 'flex';
+        });
+
+        notificationIcon.addEventListener('click', () => {
+            notificationModal.style.display = 'flex';
+            markAllAsRead();
+        });
+
+        closeNotificationModal.addEventListener('click', () => {
+            notificationModal.style.display = 'none';
+        });
+
+        window.addEventListener('click', (e) => {
+            if (e.target === notificationModal) {
+                notificationModal.style.display = 'none';
+            }
+        });
+
+        logoutBtn.addEventListener('click', async () => {
+            await auth.signOut();
+            window.location.href = 'index.html';
+        });
+        
+        myProfileBtn.addEventListener('click', () => {
+            window.location.href = 'admin_profile.html';
+            profileMenu.style.display = 'none';
+        });
+
+        // Close dropdown when clicking outside
+        document.addEventListener('click', (e) => {
+            if (!profileToggle.contains(e.target) && !profileMenu.contains(e.target)) {
+                profileMenu.style.display = 'none';
+            }
+        });
+    </script>
+
+</body>
+</html>

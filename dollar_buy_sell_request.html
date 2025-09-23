@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Panel - Dollar Requests</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f0f2f5;
+            padding: 20px;
+        }
+        .container {
+            background-color: #fff;
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+            max-width: 1200px;
+            margin: 0 auto;
+            position: relative;
+        }
+        h1 {
+            text-align: center;
+            color: #333;
+            margin-bottom: 20px;
+        }
+        .request-list {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+        .request-item {
+            background-color: #f9f9f9;
+            padding: 15px;
+            border-radius: 8px;
+            border-left: 5px solid;
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+        }
+        .request-item.buy {
+            border-color: #007bff;
+        }
+        .request-item.sell {
+            border-color: #28a745;
+        }
+        .request-details {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+        .request-details p {
+            margin: 0;
+            font-size: 0.9rem;
+            color: #555;
+        }
+        .request-details .label {
+            font-weight: bold;
+            color: #333;
+        }
+        .request-actions {
+            display: flex;
+            gap: 10px;
+            margin-top: 10px;
+        }
+        .request-actions button {
+            padding: 8px 12px;
+            border: none;
+            border-radius: 5px;
+            color: #fff;
+            font-weight: bold;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+        .request-actions .approve {
+            background-color: #28a745;
+        }
+        .request-actions .approve:hover {
+            background-color: #218838;
+        }
+        .request-actions .reject {
+            background-color: #dc3545;
+        }
+        .request-actions .reject:hover {
+            background-color: #c82333;
+        }
+        .status-badge {
+            padding: 5px 10px;
+            border-radius: 15px;
+            font-weight: bold;
+            font-size: 0.8rem;
+            text-transform: uppercase;
+        }
+        .status-badge.pending {
+            background-color: #ffc107;
+            color: #212529;
+        }
+        .status-badge.approved {
+            background-color: #28a745;
+            color: #fff;
+        }
+        .status-badge.rejected {
+            background-color: #dc3545;
+            color: #fff;
+        }
+        .loading {
+            text-align: center;
+            font-size: 1.2rem;
+            color: #777;
+        }
+        .back-btn {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            font-size: 24px;
+            color: #555;
+            text-decoration: none;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+
+<a href="#" class="back-btn" onclick="window.history.back()">&#8592; Back</a>
+<div class="container">
+    <h1>Admin Panel - Dollar Requests</h1>
+    <div id="request-list" class="request-list">
+        <p class="loading">Loading requests...</p>
+    </div>
+</div>
+
+<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
+<script>
+    const firebaseConfig = {
+      apiKey: "AIzaSyCS5HN0yT3e7el75fBc2HLcLmTnrcQZ7bc",
+      authDomain: "exsurvey-1c78a.firebaseapp.com",
+      databaseURL: "https://exsurvey-1c78a-default-rtdb.firebaseio.com",
+      projectId: "exsurvey-1c78a",
+      storageBucket: "exsurvey-1c78a.firebasestorage.app",
+      messagingSenderId: "754959615386",
+      appId: "1:754959615386:web:65c390db232a7dafd3e623",
+      measurementId: "G-8SQNS2DLBT"
+    };
+
+    firebase.initializeApp(firebaseConfig);
+    const database = firebase.database();
+    
+    const requestList = document.getElementById('request-list');
+
+    // Fetch and display only pending requests
+    database.ref('dollar_buy_sell_request_history')
+        .orderByChild('status')
+        .equalTo('Pending')
+        .on('value', (snapshot) => {
+            const requests = snapshot.val();
+            requestList.innerHTML = ''; // Clear previous requests
+
+            if (requests) {
+                // Sort keys to display the newest requests first
+                const sortedKeys = Object.keys(requests).sort((a, b) => requests[b].timestamp - requests[a].timestamp);
+
+                sortedKeys.forEach(key => {
+                    const request = requests[key];
+                    const requestItem = document.createElement('div');
+                    requestItem.classList.add('request-item', request.type);
+
+                    const timestamp = new Date(request.timestamp).toLocaleString();
+                    const statusClass = request.status.toLowerCase();
+                    
+                    let detailsHTML;
+                    if (request.type === 'buy') {
+                        detailsHTML = `
+                            <p><span class="label">Type:</span> <span style="font-weight: bold; color: #007bff;">Buy</span></p>
+                            <p><span class="label">User:</span> ${request.username}</p>
+                            <p><span class="label">Amount:</span> $${request.dollarAmount} for ${request.totalBDT} BDT</p>
+                            <p><span class="label">Payment Method:</span> ${request.paymentMethod}</p>
+                            <p><span class="label">Received Method:</span> ${request.receivedMethod}</p>
+                            <p><span class="label">Received Account:</span> ${request.receivedAccount}</p>
+                            <p><span class="label">Tnx ID:</span> ${request.tnxId}</p>
+                            <p><span class="label">WhatsApp:</span> ${request.whatsappNo}</p>
+                        `;
+                    } else { // sell
+                        detailsHTML = `
+                            <p><span class="label">Type:</span> <span style="font-weight: bold; color: #28a745;">Sell</span></p>
+                            <p><span class="label">User:</span> ${request.username}</p>
+                            <p><span class="label">Amount:</span> $${request.dollarAmount} for ${request.totalBDT} BDT</p>
+                            <p><span class="label">Send Method:</span> ${request.sendMethod}</p>
+                            <p><span class="label">Received Method:</span> ${request.receivedMethod}</p>
+                            <p><span class="label">Received Account:</span> ${request.receivedAccount}</p>
+                            <p><span class="label">Tnx ID:</span> ${request.tnxId}</p>
+                            <p><span class="label">WhatsApp:</span> ${request.whatsappNo}</p>
+                        `;
+                    }
+                    
+                    requestItem.innerHTML = `
+                        <div class="request-details">
+                            ${detailsHTML}
+                            <p><span class="label">Date:</span> ${timestamp}</p>
+                            <p><span class="label">Status:</span> <span class="status-badge ${statusClass}">${request.status}</span></p>
+                        </div>
+                        <div class="request-actions" id="actions-${key}">
+                            <button class="approve" onclick="updateRequestStatus('${key}', 'Approved')">Approve ✅</button>
+                            <button class="reject" onclick="updateRequestStatus('${key}', 'Rejected')">Reject ❌</button>
+                        </div>
+                    `;
+                    requestList.appendChild(requestItem);
+                });
+            } else {
+                requestList.innerHTML = '<p style="text-align: center; color: #777;">No pending requests found.</p>';
+            }
+        });
+
+    function updateRequestStatus(key, status) {
+        database.ref('dollar_buy_sell_request_history/' + key).update({ status: status })
+            .then(() => {
+                // You can add a success message to a different element if needed, but per request, no alert.
+                console.log(`Request ${key} status updated to ${status}.`);
+            })
+            .catch(error => {
+                // Handle error
+                console.error('Error updating status: ', error.message);
+            });
+    }
+</script>
+
+</body>
+</html>

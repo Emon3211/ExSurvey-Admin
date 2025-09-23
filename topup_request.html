@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Panel - Pending Requests</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f9;
+            margin: 0;
+            padding: 0;
+        }
+        .container {
+            max-width: 700px;
+            margin: 20px auto;
+            padding: 20px;
+            background-color: #fff;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+        .header {
+            display: flex;
+            align-items: center;
+            padding-bottom: 20px;
+            border-bottom: 1px solid #ddd;
+            margin-bottom: 20px;
+        }
+        .header .back-btn {
+            background: none;
+            border: none;
+            font-size: 24px;
+            cursor: pointer;
+            margin-right: 15px;
+        }
+        .header h1 {
+            font-size: 24px;
+            margin: 0;
+        }
+        .request-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+        .request-item {
+            padding: 15px;
+            border-bottom: 1px solid #eee;
+            position: relative;
+        }
+        .request-item:last-child {
+            border-bottom: none;
+        }
+        .request-details {
+            font-size: 16px;
+            line-height: 1.5;
+        }
+        .request-details strong {
+            color: #333;
+        }
+        .request-details span {
+            color: #666;
+        }
+        .status {
+            font-weight: bold;
+            display: inline-block;
+            padding: 5px 10px;
+            border-radius: 5px;
+            margin-top: 10px;
+        }
+        .status.pending {
+            background-color: #ffc107;
+            color: #fff;
+        }
+        .action-buttons {
+            margin-top: 15px;
+            display: flex;
+            gap: 10px;
+        }
+        .action-buttons button {
+            padding: 8px 15px;
+            border: none;
+            border-radius: 5px;
+            color: #fff;
+            cursor: pointer;
+            font-size: 14px;
+        }
+        .action-buttons .approve-btn {
+            background-color: #28a745;
+        }
+        .action-buttons .reject-btn {
+            background-color: #dc3545;
+        }
+        .action-buttons button:hover {
+            opacity: 0.8;
+        }
+        .no-requests {
+            text-align: center;
+            color: #888;
+            font-size: 18px;
+            padding: 50px 0;
+        }
+        .message {
+            margin-top: 15px;
+            padding: 10px;
+            border-radius: 5px;
+            display: none;
+        }
+        .message.success {
+            background-color: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        .message.error {
+            background-color: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div class="header">
+        <button class="back-btn" onclick="history.back()">&#x2190;</button>
+        <h1>Pending Top-Up Requests</h1>
+    </div>
+
+    <ul id="request-list" class="request-list">
+        </ul>
+
+    <div id="message" class="message"></div>
+</div>
+
+<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
+
+<script>
+    const firebaseConfig = {
+      apiKey: "AIzaSyCS5HN0yT3e7el75fBc2HLcLmTnrcQZ7bc",
+      authDomain: "exsurvey-1c78a.firebaseapp.com",
+      databaseURL: "https://exsurvey-1c78a-default-rtdb.firebaseio.com",
+      projectId: "exsurvey-1c78a",
+      storageBucket: "exsurvey-1c78a.firebasestorage.app",
+      messagingSenderId: "754959615386",
+      appId: "1:754959615386:web:65c390db232a7dafd3e623",
+      measurementId: "G-8SQNS2DLBT"
+    };
+
+    firebase.initializeApp(firebaseConfig);
+    const database = firebase.database();
+    const requestsRef = database.ref('topup_request');
+
+    // Function to load and display pending requests
+    function loadPendingRequests() {
+        // Query to filter requests with 'pending' status
+        const pendingRequestsRef = requestsRef.orderByChild('status').equalTo('pending');
+        
+        pendingRequestsRef.on('value', (snapshot) => {
+            const list = document.getElementById('request-list');
+            const messageBox = document.getElementById('message');
+            const data = snapshot.val();
+            
+            if (!data) {
+                list.innerHTML = `<li class="no-requests">No pending requests found.</li>`;
+                messageBox.style.display = 'none';
+                return;
+            }
+
+            // Convert object to array and sort by timestamp (newest first)
+            const requestsArray = Object.keys(data).map(key => ({
+                id: key,
+                ...data[key]
+            }));
+
+            requestsArray.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+
+            list.innerHTML = '';
+            requestsArray.forEach(item => {
+                const date = new Date(item.timestamp).toLocaleString();
+                const itemHtml = `
+                    <li class="request-item">
+                        <div class="request-details">
+                            <strong>Username:</strong> <span>${item.username}</span><br>
+                            <strong>Amount:</strong> <span>${item.amount} BDT (${item.diamondPackage} Daimonds)</span><br>
+                            <strong>Player ID:</strong> <span>${item.playerId}</span><br>
+                            <strong>Transaction ID:</strong> <span>${item.transactionId}</span><br>
+                            <strong>Method:</strong> <span>${item.paymentMethod}</span><br>
+                            <strong>Payment No:</strong> <span>${item.paymentNumber}</span><br>
+                            <strong>Date:</strong> <span>${date}</span>
+                        </div>
+                        <div class="action-buttons">
+                            <button class="approve-btn" data-key="${item.id}">Approve</button>
+                            <button class="reject-btn" data-key="${item.id}">Reject</button>
+                        </div>
+                    </li>
+                `;
+                list.innerHTML += itemHtml;
+            });
+        });
+    }
+
+    // Function to update the status of a request
+    function updateRequestStatus(key, status) {
+        requestsRef.child(key).update({ status: status })
+            .then(() => {
+                showMessage(`Request ${status} successfully!`, 'success');
+            })
+            .catch(error => {
+                showMessage(`Error updating request: ${error.message}`, 'error');
+            });
+    }
+
+    // Add event listeners for the action buttons
+    document.getElementById('request-list').addEventListener('click', (event) => {
+        const target = event.target;
+        const key = target.getAttribute('data-key');
+
+        if (target.classList.contains('approve-btn')) {
+            updateRequestStatus(key, 'completed');
+        } else if (target.classList.contains('reject-btn')) {
+            updateRequestStatus(key, 'cancelled');
+        }
+    });
+
+    // Initial load
+    window.onload = loadPendingRequests;
+
+    // Helper function to show messages
+    function showMessage(text, type) {
+        const messageBox = document.getElementById('message');
+        messageBox.style.display = 'block';
+        messageBox.innerText = text;
+        messageBox.className = `message ${type}`;
+    }
+</script>
+
+</body>
+</html>

@@ -1,0 +1,715 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Panel</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f0f2f5;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+            min-height: 100vh;
+        }
+        .container {
+            background-color: #fff;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+            width: 100%;
+            max-width: 950px;
+        }
+        .header {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 25px;
+            border-bottom: 1px solid #ddd;
+            padding-bottom: 15px;
+            position: relative;
+        }
+        .header h1 {
+            color: #333;
+            margin: 0;
+            font-size: 26px;
+        }
+        .back-btn {
+            background: none;
+            border: none;
+            font-size: 24px;
+            cursor: pointer;
+            color: #555;
+            text-decoration: none;
+            position: absolute;
+            left: 0;
+            top: 50%;
+            transform: translateY(-50%);
+        }
+        .section {
+            margin-bottom: 30px;
+            padding: 20px;
+            border: 1px solid #eee;
+            border-radius: 8px;
+            background-color: #fafafa;
+        }
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+        h2 {
+            color: #555;
+            margin: 0;
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+            color: #555;
+        }
+        input[type="text"], input[type="number"], select {
+            width: calc(100% - 22px);
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            box-sizing: border-box;
+        }
+        .btn {
+            padding: 10px 15px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: background-color 0.3s ease;
+        }
+        .btn-primary {
+            background-color: #007bff;
+            color: white;
+        }
+        .btn-danger {
+            background-color: #dc3545;
+            color: white;
+        }
+        .btn-success {
+            background-color: #28a745;
+            color: white;
+        }
+        .btn:hover {
+            opacity: 0.9;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 15px;
+        }
+        th, td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+        }
+        th {
+            background-color: #f2f2f2;
+        }
+        .action-btns {
+            display: flex;
+            gap: 5px;
+        }
+        .status-badge {
+            padding: 5px 10px;
+            border-radius: 5px;
+            color: white;
+            font-size: 12px;
+            font-weight: bold;
+        }
+        .status-pending { background-color: #ffc107; }
+        .status-approved { background-color: #28a745; }
+        .status-rejected { background-color: #dc3545; }
+        
+        .tab-menu {
+            display: flex;
+            justify-content: center;
+            margin-bottom: 20px;
+        }
+        .tab-btn {
+            background: none;
+            border: none;
+            padding: 10px 20px;
+            cursor: pointer;
+            font-size: 16px;
+            border-bottom: 2px solid transparent;
+            transition: border-bottom 0.3s ease;
+        }
+        .tab-btn.active {
+            border-bottom: 2px solid #007bff;
+            font-weight: bold;
+            color: #007bff;
+        }
+        .tab-content {
+            display: none;
+        }
+        .tab-content.active {
+            display: block;
+        }
+        .message-container {
+            margin-top: 20px;
+            padding: 15px;
+            border-radius: 5px;
+            display: none;
+            font-weight: bold;
+            text-align: center;
+        }
+        .message-success {
+            background-color: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        .message-error {
+            background-color: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgba(0,0,0,0.4);
+        }
+        .modal-content {
+            background-color: #fefefe;
+            margin: 15% auto;
+            padding: 20px;
+            border: 1px solid #888;
+            width: 80%;
+            max-width: 400px;
+            border-radius: 10px;
+            text-align: center;
+        }
+        .modal-buttons {
+            margin-top: 20px;
+            display: flex;
+            justify-content: space-around;
+        }
+    </style>
+    
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
+</head>
+<body>
+
+<div class="container">
+    <div class="header">
+        <a href="#" class="back-btn" onclick="goBack()">&#8592;</a>
+        <h1>Admin Panel</h1>
+        <p id="auth-status">Please log in...</p>
+    </div>
+    <div id="message-area" class="message-container"></div>
+
+    <div id="confirmation-modal" class="modal">
+        <div class="modal-content">
+            <p id="modal-message"></p>
+            <div class="modal-buttons">
+                <button class="btn btn-danger" id="confirm-yes">Yes</button>
+                <button class="btn btn-primary" id="confirm-no">No</button>
+            </div>
+        </div>
+    </div>
+    
+    <div class="tab-menu">
+        <button class="tab-btn active" data-tab="dashboard">Dashboard</button>
+        <button class="tab-btn" data-tab="recharge-rate">Recharge Rate</button>
+        <button class="tab-btn" data-tab="operators">Operators</button>
+        <button class="tab-btn" data-tab="offers">Offers</button>
+    </div>
+    <div id="dashboard" class="tab-content active section">
+        <div class="section-header">
+            <h2>Pending Recharge Requests</h2>
+        </div>
+        <table>
+            <thead>
+                <tr>
+                    <th>User</th>
+                    <th>Number</th>
+                    <th>BDT Amount</th>
+                    <th>Dollar Cost</th>
+                    <th>Offer Selected</th>
+                    <th>Status</th>
+                    <th>Time</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody id="pending-requests">
+                <tr><td colspan="8" style="text-align: center;">No pending requests.</td></tr>
+            </tbody>
+        </table>
+    </div>
+
+    <div id="recharge-rate" class="tab-content section">
+        <div class="section-header">
+            <h2>Update Dollar Rate</h2>
+        </div>
+        <div class="form-group">
+            <label for="dollar-rate">Current Rate (1$ = BDT)</label>
+            <input type="number" id="dollar-rate" placeholder="e.g. 115.50" step="0.01">
+        </div>
+        <button class="btn btn-primary" id="update-rate-btn">Update Rate</button>
+    </div>
+
+    <div id="operators" class="tab-content section">
+        <div class="section-header">
+            <h2>Manage Operators</h2>
+            <button class="btn btn-primary" id="add-operator-btn">Add New Operator</button>
+        </div>
+        <div id="new-operator-form" style="display: none; margin-bottom: 15px;">
+            <div class="form-group">
+                <label for="new-operator-name">New Operator Name</label>
+                <input type="text" id="new-operator-name" placeholder="e.g. Grameenphone">
+            </div>
+            <button class="btn btn-success" id="save-operator-btn">Save Operator</button>
+            <button class="btn btn-danger" id="cancel-operator-btn">Cancel</button>
+        </div>
+        <table>
+            <thead>
+                <tr>
+                    <th>Operator Name</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody id="operators-list">
+                <tr><td colspan="2" style="text-align: center;">No operators found.</td></tr>
+            </tbody>
+        </table>
+    </div>
+
+    <div id="offers" class="tab-content section">
+        <div class="section-header">
+            <h2>Manage Offers</h2>
+            <button class="btn btn-primary" id="add-offer-btn">Add New Offer</button>
+        </div>
+        <div id="new-offer-form" style="display: none; margin-bottom: 15px;">
+            <div class="form-group">
+                <label for="offer-operator">Operator</label>
+                <select id="offer-operator" required></select>
+            </div>
+            <div class="form-group">
+                <label for="offer-name">Offer Name</label>
+                <input type="text" id="offer-name" required>
+            </div>
+            <div class="form-group">
+                <label for="offer-description">Description</label>
+                <input type="text" id="offer-description" required>
+            </div>
+            <div class="form-group">
+                <label for="offer-price">Price (Dollar $)</label>
+                <input type="number" id="offer-price" step="0.01" required>
+            </div>
+            <button class="btn btn-success" id="save-offer-btn">Save Offer</button>
+            <button class="btn btn-danger" id="cancel-offer-btn">Cancel</button>
+        </div>
+        <table>
+            <thead>
+                <tr>
+                    <th>Offer Name</th>
+                    <th>Operator</th>
+                    <th>Price ($)</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody id="offers-list">
+                <tr><td colspan="4" style="text-align: center;">No offers found.</td></tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<script>
+    const firebaseConfig = {
+      apiKey: "AIzaSyCS5HN0yT3e7el75fBc2HLcLmTnrcQZ7bc",
+      authDomain: "exsurvey-1c78a.firebaseapp.com",
+      databaseURL: "https://exsurvey-1c78a-default-rtdb.firebaseio.com",
+      projectId: "exsurvey-1c78a",
+      storageBucket: "exsurvey-1c78a.firebasestorage.app",
+      messagingSenderId: "754959615386",
+      appId: "1:754959615386:web:65c390db232a7dafd3e623",
+      measurementId: "G-8SQNS2DLBT"
+    };
+
+    firebase.initializeApp(firebaseConfig);
+    const auth = firebase.auth();
+    const database = firebase.database();
+
+    const authStatus = document.getElementById('auth-status');
+    const pendingRequestsTable = document.getElementById('pending-requests');
+    const updateRateBtn = document.getElementById('update-rate-btn');
+    const dollarRateInput = document.getElementById('dollar-rate');
+    const operatorsList = document.getElementById('operators-list');
+    const offersList = document.getElementById('offers-list');
+    const newOperatorForm = document.getElementById('new-operator-form');
+    const newOperatorNameInput = document.getElementById('new-operator-name');
+    const saveOperatorBtn = document.getElementById('save-operator-btn');
+    const addOperatorBtn = document.getElementById('add-operator-btn');
+    const cancelOperatorBtn = document.getElementById('cancel-operator-btn');
+    const addOfferBtn = document.getElementById('add-offer-btn');
+    const newOfferForm = document.getElementById('new-offer-form');
+    const saveOfferBtn = document.getElementById('save-offer-btn');
+    const cancelOfferBtn = document.getElementById('cancel-offer-btn');
+    const offerOperatorSelect = document.getElementById('offer-operator');
+    const offerNameInput = document.getElementById('offer-name');
+    const offerDescriptionInput = document.getElementById('offer-description');
+    const offerPriceInput = document.getElementById('offer-price');
+    const messageArea = document.getElementById('message-area');
+
+    const confirmationModal = document.getElementById('confirmation-modal');
+    const modalMessage = document.getElementById('modal-message');
+    const confirmYesBtn = document.getElementById('confirm-yes');
+    const confirmNoBtn = document.getElementById('confirm-no');
+
+    let currentRate = 0;
+    
+    function showMessage(message, isError = false) {
+        messageArea.textContent = message;
+        messageArea.style.display = 'block';
+        messageArea.className = 'message-container';
+        if (isError) {
+            messageArea.classList.add('message-error');
+        } else {
+            messageArea.classList.add('message-success');
+        }
+        setTimeout(() => {
+            messageArea.style.display = 'none';
+        }, 5000);
+    }
+
+    function showConfirmation(message, onConfirm) {
+        modalMessage.textContent = message;
+        confirmationModal.style.display = 'block';
+
+        const handleYes = () => {
+            onConfirm(true);
+            confirmationModal.style.display = 'none';
+            confirmYesBtn.removeEventListener('click', handleYes);
+            confirmNoBtn.removeEventListener('click', handleNo);
+        };
+
+        const handleNo = () => {
+            onConfirm(false);
+            confirmationModal.style.display = 'none';
+            confirmYesBtn.removeEventListener('click', handleYes);
+            confirmNoBtn.removeEventListener('click', handleNo);
+        };
+
+        confirmYesBtn.addEventListener('click', handleYes);
+        confirmNoBtn.addEventListener('click', handleNo);
+    }
+    
+    auth.onAuthStateChanged(user => {
+        if (user) {
+            authStatus.textContent = `Logged in as: ${user.email}`;
+            document.querySelectorAll('.tab-content').forEach(el => el.style.display = 'block');
+            document.querySelectorAll('.tab-menu').forEach(el => el.style.display = 'flex');
+            
+            loadDashboard();
+            loadRechargeRate();
+            loadOperators();
+            loadOffers();
+
+        } else {
+            authStatus.textContent = 'Please log in as Admin.';
+            document.querySelectorAll('.tab-content').forEach(el => el.style.display = 'none');
+            document.querySelectorAll('.tab-menu').forEach(el => el.style.display = 'none');
+            
+            const email = prompt("Enter admin email:");
+            const password = prompt("Enter admin password:");
+            if (email && password) {
+                auth.signInWithEmailAndPassword(email, password)
+                    .catch(error => {
+                        showMessage(`Login failed: ${error.message}`, true);
+                    });
+            } else {
+                showMessage("Login cancelled. You cannot access the admin panel.", true);
+            }
+        }
+    });
+    
+    function goBack() {
+        window.history.back();
+    }
+
+    document.querySelectorAll('.tab-btn').forEach(button => {
+        button.addEventListener('click', () => {
+            document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+            
+            button.classList.add('active');
+            document.getElementById(button.dataset.tab).classList.add('active');
+        });
+    });
+
+    const loadDashboard = () => {
+        database.ref('recharge_history').orderByChild('timestamp').on('value', snapshot => {
+            pendingRequestsTable.innerHTML = '';
+            if (snapshot.exists()) {
+                const requestsArray = [];
+                snapshot.forEach(childSnapshot => {
+                    const req = childSnapshot.val();
+                    if (req.status === 'Pending') {
+                        requestsArray.push({ key: childSnapshot.key, ...req });
+                    }
+                });
+                
+                requestsArray.sort((a, b) => b.timestamp - a.timestamp);
+                
+                if (requestsArray.length > 0) {
+                    requestsArray.forEach(req => {
+                        const row = document.createElement('tr');
+                        
+                        const offerName = req.offer_name ? req.offer_name : 'N/A';
+                        const timestamp = req.timestamp ? new Date(req.timestamp).toLocaleString() : 'N/A';
+                        
+                        row.innerHTML = `
+                            <td>${req.username}</td>
+                            <td>${req.mobileNumber}</td>
+                            <td>${req.amount_bdt.toFixed(2)}</td>
+                            <td>${req.amount_dollar.toFixed(2)}</td>
+                            <td>${offerName}</td>
+                            <td><span class="status-badge status-pending">${req.status}</span></td>
+                            <td>${timestamp}</td>
+                            <td class="action-btns">
+                                <button class="btn btn-success" onclick="approveRecharge('${req.key}', ${req.amount_dollar}, '${req.userId}')">Approve</button>
+                                <button class="btn btn-danger" onclick="rejectRecharge('${req.key}')">Reject</button>
+                            </td>
+                        `;
+                        pendingRequestsTable.appendChild(row);
+                    });
+                } else {
+                    pendingRequestsTable.innerHTML = `<tr><td colspan="8" style="text-align: center;">No pending requests.</td></tr>`;
+                }
+            } else {
+                pendingRequestsTable.innerHTML = `<tr><td colspan="8" style="text-align: center;">No pending requests.</td></tr>`;
+            }
+        });
+    };
+
+    window.approveRecharge = (key, amount_dollar, userId) => {
+        const historyRef = database.ref('recharge_history/' + key);
+        const userRef = database.ref('users/' + userId);
+
+        database.ref('users/' + userId).transaction(currentData => {
+            if (currentData) {
+                currentData.balance = (currentData.balance || 0) - amount_dollar;
+            }
+            return currentData;
+        }).then(() => {
+            historyRef.update({ status: 'Approved' });
+            showMessage("Recharge approved successfully!");
+        }).catch(error => {
+            showMessage("Error approving recharge: " + error.message, true);
+        });
+    };
+
+    window.rejectRecharge = (key) => {
+        database.ref('recharge_history/' + key).update({ status: 'Rejected' })
+            .then(() => {
+                showMessage("Recharge rejected successfully!");
+            })
+            .catch(error => {
+                showMessage("Error rejecting recharge: " + error.message, true);
+            });
+    };
+
+    const loadRechargeRate = () => {
+        database.ref('recharge_dollar_rate').on('value', snapshot => {
+            currentRate = snapshot.val() || 0;
+            dollarRateInput.value = currentRate;
+        });
+    };
+    
+    updateRateBtn.addEventListener('click', () => {
+        const newRate = parseFloat(dollarRateInput.value);
+        if (isNaN(newRate) || newRate <= 0) {
+            showMessage('Please enter a valid rate.', true);
+            return;
+        }
+        database.ref('recharge_dollar_rate').set(newRate)
+            .then(() => showMessage('Dollar rate updated successfully!'))
+            .catch(error => showMessage('Failed to update rate: ' + error.message, true));
+    });
+
+    const loadOperators = () => {
+        database.ref('operators').on('value', snapshot => {
+            operatorsList.innerHTML = '';
+            offerOperatorSelect.innerHTML = '';
+            if (snapshot.exists()) {
+                snapshot.forEach(childSnapshot => {
+                    const op = childSnapshot.val();
+                    const key = childSnapshot.key;
+                    const row = document.createElement('tr');
+                    
+                    row.innerHTML = `
+                        <td>${op.name}</td>
+                        <td class="action-btns">
+                            <button class="btn btn-danger" onclick="deleteOperator('${key}')">Delete</button>
+                        </td>
+                    `;
+                    operatorsList.appendChild(row);
+                    
+                    const option = document.createElement('option');
+                    option.value = op.name;
+                    option.textContent = op.name;
+                    offerOperatorSelect.appendChild(option);
+                });
+            } else {
+                operatorsList.innerHTML = `<tr><td colspan="2" style="text-align: center;">No operators found.</td></tr>`;
+            }
+        });
+    };
+
+    addOperatorBtn.addEventListener('click', () => {
+        newOperatorForm.style.display = 'block';
+        newOperatorNameInput.value = '';
+    });
+    
+    cancelOperatorBtn.addEventListener('click', () => {
+        newOperatorForm.style.display = 'none';
+    });
+
+    saveOperatorBtn.addEventListener('click', () => {
+        const name = newOperatorNameInput.value.trim();
+        if (name === '') {
+            showMessage('Operator name cannot be empty.', true);
+            return;
+        }
+        const key = name.toLowerCase().replace(/\s/g, '');
+        database.ref('operators/' + key).set({ name: name })
+            .then(() => {
+                showMessage('Operator added successfully!');
+                newOperatorForm.style.display = 'none';
+            })
+            .catch(error => showMessage('Failed to add operator: ' + error.message, true));
+    });
+
+    window.deleteOperator = (key) => {
+        showConfirmation('Are you sure you want to delete this operator?', (result) => {
+            if (result) {
+                database.ref('operators/' + key).remove()
+                    .then(() => showMessage('Operator deleted successfully!'))
+                    .catch(error => showMessage('Failed to delete operator: ' + error.message, true));
+            }
+        });
+    };
+    
+    const loadOffers = () => {
+        database.ref('offers').on('value', snapshot => {
+            offersList.innerHTML = '';
+            if (snapshot.exists()) {
+                snapshot.forEach(childSnapshot => {
+                    const offer = childSnapshot.val();
+                    const key = childSnapshot.key;
+                    const row = document.createElement('tr');
+                    
+                    row.innerHTML = `
+                        <td>${offer.offer_name}</td>
+                        <td>${offer.operator}</td>
+                        <td>${offer.price.toFixed(2)}</td>
+                        <td class="action-btns">
+                            <button class="btn btn-primary" onclick="editOffer('${key}')">Edit</button>
+                            <button class="btn btn-danger" onclick="deleteOffer('${key}')">Delete</button>
+                        </td>
+                    `;
+                    offersList.appendChild(row);
+                });
+            } else {
+                offersList.innerHTML = `<tr><td colspan="4" style="text-align: center;">No offers found.</td></tr>`;
+            }
+        });
+    };
+
+    addOfferBtn.addEventListener('click', () => {
+        newOfferForm.style.display = 'block';
+        offerNameInput.value = '';
+        offerDescriptionInput.value = '';
+        offerPriceInput.value = '';
+        newOfferForm.dataset.mode = 'add';
+    });
+    
+    cancelOfferBtn.addEventListener('click', () => {
+        newOfferForm.style.display = 'none';
+    });
+    
+    window.editOffer = (key) => {
+        const offerRef = database.ref('offers/' + key);
+        offerRef.once('value', snapshot => {
+            const offer = snapshot.val();
+            if (offer) {
+                newOfferForm.style.display = 'block';
+                offerOperatorSelect.value = offer.operator;
+                offerNameInput.value = offer.offer_name;
+                offerDescriptionInput.value = offer.description;
+                offerPriceInput.value = offer.price;
+                newOfferForm.dataset.mode = 'edit';
+                newOfferForm.dataset.key = key;
+            }
+        });
+    };
+
+    saveOfferBtn.addEventListener('click', () => {
+        const operator = offerOperatorSelect.value;
+        const name = offerNameInput.value.trim();
+        const description = offerDescriptionInput.value.trim();
+        const price = parseFloat(offerPriceInput.value);
+
+        if (!operator || name === '' || description === '' || isNaN(price) || price <= 0) {
+            showMessage('Please fill all fields with valid data.', true);
+            return;
+        }
+
+        const offerData = {
+            operator: operator,
+            offer_name: name,
+            description: description,
+            price: price
+        };
+        
+        const mode = newOfferForm.dataset.mode;
+        
+        if (mode === 'add') {
+            database.ref('offers').push(offerData)
+                .then(() => {
+                    showMessage('Offer added successfully!');
+                    newOfferForm.style.display = 'none';
+                })
+                .catch(error => showMessage('Failed to add offer: ' + error.message, true));
+        } else if (mode === 'edit') {
+            const key = newOfferForm.dataset.key;
+            database.ref('offers/' + key).update(offerData)
+                .then(() => {
+                    showMessage('Offer updated successfully!');
+                    newOfferForm.style.display = 'none';
+                })
+                .catch(error => showMessage('Failed to update offer: ' + error.message, true));
+        }
+    });
+
+    window.deleteOffer = (key) => {
+        showConfirmation('Are you sure you want to delete this offer?', (result) => {
+            if (result) {
+                database.ref('offers/' + key).remove()
+                    .then(() => showMessage('Offer deleted successfully!'))
+                    .catch(error => showMessage('Failed to delete offer: ' + error.message, true));
+            }
+        });
+    };
+</script>
+</body>
+</html>

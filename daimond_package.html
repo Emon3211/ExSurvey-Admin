@@ -1,0 +1,291 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Panel - Diamond Packages</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f9;
+            margin: 0;
+            padding: 0;
+        }
+        .container {
+            max-width: 600px;
+            margin: 20px auto;
+            padding: 20px;
+            background-color: #fff;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+        .header {
+            display: flex;
+            align-items: center;
+            padding-bottom: 20px;
+            border-bottom: 1px solid #ddd;
+            margin-bottom: 20px;
+        }
+        .header .back-btn {
+            background: none;
+            border: none;
+            font-size: 24px;
+            cursor: pointer;
+            margin-right: 15px;
+        }
+        .header h1 {
+            font-size: 24px;
+            margin: 0;
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        .form-group input {
+            width: calc(100% - 20px);
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+        }
+        .submit-btn {
+            width: 100%;
+            padding: 10px;
+            background-color: #28a745;
+            color: #fff;
+            border: none;
+            border-radius: 5px;
+            font-size: 16px;
+            cursor: pointer;
+        }
+        .submit-btn:hover {
+            background-color: #218838;
+        }
+        .package-list {
+            margin-top: 30px;
+        }
+        .package-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px;
+            border-bottom: 1px solid #eee;
+        }
+        .package-item:last-child {
+            border-bottom: none;
+        }
+        .package-details {
+            font-size: 16px;
+        }
+        .action-btns button {
+            background-color: #007bff;
+            color: #fff;
+            border: none;
+            padding: 5px 10px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin-left: 5px;
+        }
+        .action-btns button.delete-btn {
+            background-color: #dc3545;
+        }
+        .action-btns button:hover {
+            opacity: 0.8;
+        }
+        .message {
+            margin-top: 15px;
+            padding: 10px;
+            border-radius: 5px;
+            display: none;
+        }
+        .message.success {
+            background-color: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div class="header">
+        <button class="back-btn" onclick="history.back()">&#x2190;</button>
+        <h1>Manage Daimond Packages</h1>
+    </div>
+
+    <div class="package-form">
+        <h2 id="form-title">Add New Package</h2>
+        <div class="form-group">
+            <label for="daimond-count">Daimond Count</label>
+            <input type="number" id="daimond-count" placeholder="e.g., 100" required>
+        </div>
+        <div class="form-group">
+            <label for="package-price">Price</label>
+            <input type="number" id="package-price" placeholder="e.g., 85" required>
+        </div>
+        <button id="submit-btn" class="submit-btn">Add Package</button>
+        <input type="hidden" id="edit-key">
+    </div>
+
+    <div class="package-list">
+        <h2>Existing Packages</h2>
+        <div id="packages-container">
+            </div>
+    </div>
+
+    <div id="message" class="message"></div>
+</div>
+
+<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
+
+<script>
+    const firebaseConfig = {
+      apiKey: "AIzaSyCS5HN0yT3e7el75fBc2HLcLmTnrcQZ7bc",
+      authDomain: "exsurvey-1c78a.firebaseapp.com",
+      databaseURL: "https://exsurvey-1c78a-default-rtdb.firebaseio.com",
+      projectId: "exsurvey-1c78a",
+      storageBucket: "exsurvey-1c78a.firebasestorage.app",
+      messagingSenderId: "754959615386",
+      appId: "1:754959615386:web:65c390db232a7dafd3e623",
+      measurementId: "G-8SQNS2DLBT"
+    };
+
+    firebase.initializeApp(firebaseConfig);
+    const database = firebase.database();
+    const packagesRef = database.ref('freefire_daimond');
+
+    // Function to load and display existing packages
+    function loadPackages() {
+        packagesRef.on('value', (snapshot) => {
+            const container = document.getElementById('packages-container');
+            container.innerHTML = '';
+            snapshot.forEach((childSnapshot) => {
+                const packageKey = childSnapshot.key;
+                const packageData = childSnapshot.val();
+
+                const item = document.createElement('div');
+                item.className = 'package-item';
+                item.innerHTML = `
+                    <div class="package-details">
+                        <strong>Daimonds:</strong> ${packageData.diamonds}<br>
+                        <strong>Price:</strong> ${packageData.price} BDT
+                    </div>
+                    <div class="action-btns">
+                        <button class="edit-btn" data-key="${packageKey}" data-diamonds="${packageData.diamonds}" data-price="${packageData.price}">Edit</button>
+                        <button class="delete-btn" data-key="${packageKey}">Delete</button>
+                    </div>
+                `;
+                container.appendChild(item);
+            });
+        });
+    }
+
+    // Function to handle add/edit submission
+    document.getElementById('submit-btn').addEventListener('click', () => {
+        const diamonds = document.getElementById('daimond-count').value.trim();
+        const price = document.getElementById('package-price').value.trim();
+        const editKey = document.getElementById('edit-key').value;
+        const messageBox = document.getElementById('message');
+
+        if (diamonds === '' || price === '') {
+            messageBox.style.display = 'block';
+            messageBox.className = 'message';
+            messageBox.style.backgroundColor = '#f8d7da';
+            messageBox.style.color = '#721c24';
+            messageBox.style.border = '1px solid #f5c6cb';
+            messageBox.innerText = 'Please fill out all fields.';
+            return;
+        }
+
+        const packageData = {
+            diamonds: parseInt(diamonds),
+            price: parseInt(price)
+        };
+
+        if (editKey) {
+            // Edit existing package
+            packagesRef.child(editKey).update(packageData)
+                .then(() => {
+                    messageBox.style.display = 'block';
+                    messageBox.className = 'message success';
+                    messageBox.innerText = 'Package updated successfully!';
+                    resetForm();
+                })
+                .catch((error) => {
+                    showMessage('Error updating package: ' + error.message, 'error');
+                });
+        } else {
+            // Add new package
+            packagesRef.push(packageData)
+                .then(() => {
+                    messageBox.style.display = 'block';
+                    messageBox.className = 'message success';
+                    messageBox.innerText = 'Package added successfully!';
+                    resetForm();
+                })
+                .catch((error) => {
+                    showMessage('Error adding package: ' + error.message, 'error');
+                });
+        }
+    });
+
+    // Function to handle delete/edit button clicks
+    document.getElementById('packages-container').addEventListener('click', (event) => {
+        if (event.target.classList.contains('delete-btn')) {
+            const packageKey = event.target.getAttribute('data-key');
+            if (confirm('Are you sure you want to delete this package?')) {
+                packagesRef.child(packageKey).remove()
+                    .then(() => {
+                        showMessage('Package deleted successfully!', 'success');
+                    })
+                    .catch((error) => {
+                        showMessage('Error deleting package: ' + error.message, 'error');
+                    });
+            }
+        } else if (event.target.classList.contains('edit-btn')) {
+            const packageKey = event.target.getAttribute('data-key');
+            const diamonds = event.target.getAttribute('data-diamonds');
+            const price = event.target.getAttribute('data-price');
+            
+            // Populate form for editing
+            document.getElementById('form-title').innerText = 'Edit Package';
+            document.getElementById('daimond-count').value = diamonds;
+            document.getElementById('package-price').value = price;
+            document.getElementById('submit-btn').innerText = 'Update Package';
+            document.getElementById('edit-key').value = packageKey;
+        }
+    });
+
+    // Helper functions
+    function resetForm() {
+        document.getElementById('daimond-count').value = '';
+        document.getElementById('package-price').value = '';
+        document.getElementById('form-title').innerText = 'Add New Package';
+        document.getElementById('submit-btn').innerText = 'Add Package';
+        document.getElementById('edit-key').value = '';
+    }
+
+    function showMessage(text, type) {
+        const messageBox = document.getElementById('message');
+        messageBox.style.display = 'block';
+        messageBox.innerText = text;
+        if (type === 'success') {
+            messageBox.className = 'message success';
+        } else {
+            messageBox.className = 'message';
+            messageBox.style.backgroundColor = '#f8d7da';
+            messageBox.style.color = '#721c24';
+            messageBox.style.border = '1px solid #f5c6cb';
+        }
+    }
+
+    // Initial load
+    window.onload = loadPackages;
+</script>
+
+</body>
+</html>

@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f0f2f5;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            padding: 20px;
+        }
+        .container {
+            background-color: #fff;
+            padding: 40px;
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+            text-align: center;
+            width: 100%;
+            max-width: 500px;
+            position: relative; /* Add this to position the back button */
+        }
+        .header {
+            margin-bottom: 30px;
+            border-bottom: 2px solid #28a745;
+            padding-bottom: 15px;
+        }
+        .header h1 {
+            font-size: 32px;
+            color: #333;
+            margin: 0;
+        }
+        .button-group {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+        .admin-btn {
+            background-color: #007bff;
+            color: white;
+            padding: 15px 25px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 18px;
+            text-decoration: none;
+            transition: background-color 0.3s ease;
+        }
+        .admin-btn:hover {
+            background-color: #0056b3;
+        }
+        .admin-btn.sell {
+            background-color: #28a745;
+        }
+        .admin-btn.sell:hover {
+            background-color: #218838;
+        }
+        .back-btn {
+            position: absolute; /* Position the button relative to the container */
+            top: 20px;
+            left: 20px;
+            font-size: 24px;
+            color: #555;
+            text-decoration: none;
+            cursor: pointer;
+            transition: color 0.3s ease;
+        }
+        .back-btn:hover {
+            color: #000;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <a href="#" class="back-btn" onclick="goBack()">&#8592;</a>
+
+    <div class="header">
+        <h1>Admin Dashboard</h1>
+    </div>
+    
+    <div class="button-group">
+        <a href="social_account_buy_update_rate_request.html" class="admin-btn">Social Media Account Buy Price Update And Buy Request</a>
+        <a href="social_account_sell_update_rate_request.html" class="admin-btn sell">Social Media Account Sell Price Update And Sell Request</a>
+    </div>
+</div>
+
+<script>
+    function goBack() {
+      window.history.back();
+    }
+</script>
+
+</body>
+</html>

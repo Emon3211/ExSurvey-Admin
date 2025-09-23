@@ -1,0 +1,389 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ExSurvey Admin Panel</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f9;
+            margin: 0;
+            padding: 0;
+        }
+
+        /* Header Styles */
+        .header {
+            background-color: #ffffff;
+            padding: 15px 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+            position: relative;
+        }
+        .header h1 {
+            font-size: 24px;
+            color: #333;
+            margin: 0;
+        }
+        .back-btn {
+            position: absolute;
+            left: 20px;
+            background: none;
+            border: none;
+            font-size: 24px;
+            color: #555;
+            cursor: pointer;
+        }
+
+        /* Main Container */
+        .main-container {
+            padding: 20px;
+        }
+        
+        /* Search and Info Section */
+        .top-section {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        .total-users {
+            font-size: 18px;
+            font-weight: bold;
+            color: #555;
+        }
+        .search-container {
+            display: flex;
+            align-items: center;
+        }
+        .search-container input {
+            padding: 8px 12px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            font-size: 16px;
+        }
+        .search-container button {
+            margin-left: 10px;
+            padding: 8px 12px;
+            border: none;
+            background-color: #007bff;
+            color: #fff;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+        /* User List Styles */
+        .user-list {
+            background-color: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+        .user-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px 0;
+            border-bottom: 1px solid #eee;
+        }
+        .user-item:last-child {
+            border-bottom: none;
+        }
+        .user-info {
+            display: flex;
+            flex-direction: column;
+            text-align: left;
+        }
+        .user-name {
+            font-weight: bold;
+            font-size: 16px;
+            color: #007bff;
+            cursor: pointer;
+        }
+        .user-email, .user-balance {
+            font-size: 14px;
+            color: #666;
+            margin-top: 5px;
+        }
+        .balance-update {
+            display: flex;
+            align-items: center;
+        }
+        .balance-update input {
+            width: 80px;
+            padding: 5px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            margin-right: 10px;
+        }
+        .update-btn {
+            padding: 8px 15px;
+            background-color: #28a745;
+            color: #fff;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        /* Style for the message container */
+        #messageContainer {
+            margin-top: 15px;
+            padding: 10px;
+            font-weight: bold;
+            text-align: center;
+            border-radius: 5px;
+            display: none;
+        }
+        .success {
+            color: #155724;
+            background-color: #d4edda;
+        }
+        .error {
+            color: #721c24;
+            background-color: #f8d7da;
+        }
+
+        /* Modal Styles */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgba(0,0,0,0.4);
+            justify-content: center;
+            align-items: center;
+        }
+        .modal-content {
+            background-color: #fefefe;
+            padding: 20px;
+            border-radius: 10px;
+            width: 90%;
+            max-width: 500px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+            position: relative;
+        }
+        .close-btn {
+            color: #aaa;
+            position: absolute;
+            top: 10px;
+            right: 15px;
+            font-size: 28px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+        .close-btn:hover,
+        .close-btn:focus {
+            color: #000;
+            text-decoration: none;
+        }
+        .modal-body {
+            margin-top: 20px;
+            text-align: left;
+        }
+        .modal-body h3 {
+            border-bottom: 2px solid #007bff;
+            padding-bottom: 5px;
+            color: #007bff;
+        }
+        .modal-body p {
+            margin: 10px 0;
+            font-size: 16px;
+        }
+        .modal-body p strong {
+            color: #333;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="header">
+        <button class="back-btn" onclick="history.back()"><i class="fas fa-arrow-left"></i></button>
+        <h1>ExSurvey</h1>
+    </div>
+
+    <div class="main-container">
+        <div class="top-section">
+            <div class="total-users">
+                Total Users: <span id="totalUsersCount">Loading...</span>
+            </div>
+            <div class="search-container">
+                <input type="text" id="searchInput" placeholder="Search by username">
+                <button id="searchBtn">Search</button>
+            </div>
+        </div>
+
+        <div id="messageContainer"></div>
+
+        <div class="user-list" id="userList">
+            <p id="loadingMessage">Loading users...</p>
+        </div>
+    </div>
+
+    <div id="userDetailsModal" class="modal">
+        <div class="modal-content">
+            <span class="close-btn">&times;</span>
+            <div class="modal-body" id="modalBodyContent">
+                </div>
+        </div>
+    </div>
+
+    <script type="module">
+      import { initializeApp } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js";
+      import { getDatabase, ref, onValue, update } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-database.js";
+
+      // আপনার ওয়েব অ্যাপের Firebase কনফিগারেশন
+      const firebaseConfig = {
+        apiKey: "AIzaSyCS5HN0yT3e7el75fBc2HLcLmTnrcQZ7bc",
+        authDomain: "exsurvey-1c78a.firebaseapp.com",
+        databaseURL: "https://exsurvey-1c78a-default-rtdb.firebaseio.com",
+        projectId: "exsurvey-1c78a",
+        storageBucket: "exsurvey-1c78a.firebasestorage.app",
+        messagingSenderId: "754959615386",
+        appId: "1:754959615386:web:65c390db232a7dafd3e623",
+        measurementId: "G-8SQNS2DLBT"
+      };
+
+      // Firebase ইনিশিয়ালাইজ করুন
+      const app = initializeApp(firebaseConfig);
+      const database = getDatabase(app);
+      const usersRef = ref(database, 'users');
+
+      let allUsers = [];
+
+      // Helper function to display messages
+      function displayMessage(message, isError = false) {
+          const msgContainer = document.getElementById('messageContainer');
+          msgContainer.textContent = message;
+          msgContainer.className = isError ? 'error' : 'success';
+          msgContainer.style.display = 'block';
+
+          // Automatically hide the message after 5 seconds
+          setTimeout(() => {
+              msgContainer.style.display = 'none';
+          }, 5000); 
+      }
+
+      // সমস্ত ব্যবহারকারী লোড করুন এবং দেখান
+      onValue(usersRef, (snapshot) => {
+          allUsers = [];
+          snapshot.forEach(childSnapshot => {
+              const user = childSnapshot.val();
+              user.uid = childSnapshot.key;
+              allUsers.push(user);
+          });
+          document.getElementById('totalUsersCount').textContent = allUsers.length;
+          displayUsers(allUsers);
+      });
+
+      // ব্যবহারকারীদের তালিকা দেখানোর ফাংশন
+      const displayUsers = (usersToDisplay) => {
+          const userListContainer = document.getElementById('userList');
+          userListContainer.innerHTML = '';
+          if (usersToDisplay.length === 0) {
+              userListContainer.innerHTML = '<p>No users found.</p>';
+              return;
+          }
+
+          usersToDisplay.forEach(user => {
+              const userItem = document.createElement('div');
+              userItem.className = 'user-item';
+              userItem.innerHTML = `
+                  <div class="user-info">
+                      <div class="user-name" data-uid="${user.uid}">${user.username || 'N/A'}</div>
+                      <div class="user-email">${user.email || 'N/A'}</div>
+                      <div class="user-balance">Balance: ৳<span id="balance-${user.uid}">${(user.balance || 0).toFixed(2)}</span></div>
+                  </div>
+                  <div class="balance-update">
+                      <input type="number" id="balanceInput-${user.uid}" placeholder="Enter amount">
+                      <button class="update-btn" data-uid="${user.uid}">Update</button>
+                  </div>
+              `;
+              userListContainer.appendChild(userItem);
+          });
+          addEventListeners();
+      };
+
+      // ইভেন্ট লিসেনার যুক্ত করুন
+      const addEventListeners = () => {
+          // ব্যালেন্স আপডেট করার জন্য
+          document.querySelectorAll('.update-btn').forEach(button => {
+              button.addEventListener('click', (e) => {
+                  const uid = e.target.dataset.uid;
+                  const newBalance = document.getElementById(`balanceInput-${uid}`).value;
+
+                  if (newBalance === '' || isNaN(newBalance)) {
+                      displayMessage('Please enter a valid number.', true);
+                      return;
+                  }
+
+                  const balancePath = `users/${uid}/balance`;
+                  const updates = {};
+                  updates[balancePath] = parseFloat(newBalance);
+
+                  update(ref(database), updates)
+                      .then(() => {
+                          displayMessage('Balance updated successfully!');
+                      })
+                      .catch((error) => {
+                          console.error("Error updating balance: ", error);
+                          displayMessage("Failed to update balance.", true);
+                      });
+              });
+          });
+
+          // ব্যবহারকারীর বিস্তারিত দেখানোর জন্য
+          document.querySelectorAll('.user-name').forEach(nameElement => {
+              nameElement.addEventListener('click', (e) => {
+                  const uid = e.target.dataset.uid;
+                  const user = allUsers.find(u => u.uid === uid);
+                  if (user) {
+                      showUserDetails(user);
+                  }
+              });
+          });
+      };
+
+      // সার্চ ফাংশন
+      document.getElementById('searchBtn').addEventListener('click', () => {
+          const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+          const filteredUsers = allUsers.filter(user => {
+              return user.username && user.username.toLowerCase().includes(searchTerm);
+          });
+          displayUsers(filteredUsers);
+      });
+
+      // ব্যবহারকারীর বিস্তারিত পপআপ দেখানোর ফাংশন
+      const showUserDetails = (user) => {
+          const modal = document.getElementById('userDetailsModal');
+          const modalBodyContent = document.getElementById('modalBodyContent');
+          modalBodyContent.innerHTML = `
+              <h3>User Details</h3>
+              <p><strong>Username:</strong> ${user.username || 'N/A'}</p>
+              <p><strong>Email:</strong> ${user.email || 'N/A'}</p>
+              <p><strong>Balance:</strong> ৳${(user.balance || 0).toFixed(2)}</p>
+              <p><strong>Phone:</strong> ${user.phone || 'N/A'}</p>
+              <p><strong>Address:</strong> ${user.address || 'N/A'}</p>
+              `;
+          modal.style.display = 'flex';
+      };
+
+      // পপআপ বন্ধ করার জন্য
+      document.querySelector('.close-btn').addEventListener('click', () => {
+          document.getElementById('userDetailsModal').style.display = 'none';
+      });
+
+      window.addEventListener('click', (e) => {
+          const modal = document.getElementById('userDetailsModal');
+          if (e.target === modal) {
+              modal.style.display = 'none';
+          }
+      });
+    </script>
+</body>
+</html>

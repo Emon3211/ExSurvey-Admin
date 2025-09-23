@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Panel - Update Rate</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f0f2f5;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+        }
+        .container {
+            background-color: #fff;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+            width: 100%;
+            max-width: 400px;
+            text-align: center;
+            position: relative;
+        }
+        h1 {
+            color: #333;
+            margin-bottom: 25px;
+        }
+        .form-group {
+            margin-bottom: 20px;
+            text-align: left;
+        }
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: bold;
+            color: #555;
+        }
+        input[type="number"] {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            box-sizing: border-box;
+            font-size: 16px;
+        }
+        input[type="number"]:focus {
+            border-color: #007bff;
+            outline: none;
+        }
+        .btn-update {
+            background-color: #007bff;
+            color: white;
+            padding: 15px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            width: 100%;
+            font-size: 18px;
+            font-weight: bold;
+            transition: background-color 0.3s ease;
+        }
+        .btn-update:hover {
+            background-color: #0056b3;
+        }
+        .message {
+            margin-top: 20px;
+            font-size: 14px;
+        }
+        .error {
+            color: red;
+        }
+        .success {
+            color: green;
+        }
+        .back-btn {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            font-size: 24px;
+            color: #555;
+            text-decoration: none;
+        }
+    </style>
+    
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
+</head>
+<body>
+
+<div class="container">
+    <a href="javascript:history.back()" class="back-btn">&#8592;</a>
+    <h1>Admin Panel</h1>
+    <p>Current USD to BDT Rate: <span id="current-rate">Loading...</span></p>
+    <form id="rateForm">
+        <div class="form-group">
+            <label for="new-rate">New USD to BDT Rate</label>
+            <input type="number" id="new-rate" name="new-rate" step="0.01" min="1" required>
+        </div>
+        <button type="submit" class="btn-update">Update Rate</button>
+    </form>
+    <div id="status-message" class="message"></div>
+</div>
+
+<script>
+    // Your Firebase Config - REPLACE with your actual config
+    const firebaseConfig = {
+      apiKey: "AIzaSyCS5HN0yT3e7el75fBc2HLcLmTnrcQZ7bc",
+      authDomain: "exsurvey-1c78a.firebaseapp.com",
+      databaseURL: "https://exsurvey-1c78a-default-rtdb.firebaseio.com",
+      projectId: "exsurvey-1c78a",
+      storageBucket: "exsurvey-1c78a.firebasestorage.app",
+      messagingSenderId: "754959615386",
+      appId: "1:754959615386:web:65c390db232a7dafd3e623",
+      measurementId: "G-8SQNS2DLBT"
+    };
+
+    // Initialize Firebase
+    firebase.initializeApp(firebaseConfig);
+    const database = firebase.database();
+    
+    // UI Elements
+    const rateForm = document.getElementById('rateForm');
+    const newRateInput = document.getElementById('new-rate');
+    const currentRateDisplay = document.getElementById('current-rate');
+    const statusMessage = document.getElementById('status-message');
+
+    // Reference to the exchange rate node in Firebase
+    const usdToBdtRef = database.ref('update_all_rates/deposit_rate'); // Updated node path
+
+    // Fetch and display the current rate from Firebase
+    usdToBdtRef.on('value', (snapshot) => {
+        const rate = snapshot.val();
+        if (rate) {
+            currentRateDisplay.textContent = rate.toFixed(2);
+            newRateInput.value = rate.toFixed(2);
+        } else {
+            currentRateDisplay.textContent = 'Not set';
+        }
+    }, (error) => {
+        console.error("Firebase Read Error:", error);
+        currentRateDisplay.textContent = 'Error loading rate';
+    });
+
+    // Form submission to update the rate
+    rateForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+
+        const newRate = parseFloat(newRateInput.value);
+
+        if (isNaN(newRate) || newRate <= 0) {
+            statusMessage.textContent = 'Please enter a valid positive number.';
+            statusMessage.classList.add('error');
+            statusMessage.classList.remove('success');
+            return;
+        }
+
+        try {
+            await usdToBdtRef.set(newRate);
+            statusMessage.textContent = `Rate updated successfully to ${newRate.toFixed(2)}.`;
+            statusMessage.classList.add('success');
+            statusMessage.classList.remove('error');
+        } catch (error) {
+            console.error("Firebase Write Error:", error);
+            statusMessage.textContent = 'Failed to update rate. Please try again.';
+            statusMessage.classList.add('error');
+            statusMessage.classList.remove('success');
+        }
+    });
+</script>
+
+</body>
+</html>

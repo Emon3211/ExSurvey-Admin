@@ -1,0 +1,329 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Job Submission History - Admin</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f9;
+            margin: 0;
+            padding: 0;
+        }
+
+        /* Header Styles */
+        .header {
+            background-color: #ffffff;
+            padding: 15px 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+            position: relative;
+        }
+        .header h1 {
+            font-size: 24px;
+            color: #333;
+            margin: 0;
+        }
+        .back-btn {
+            position: absolute;
+            left: 20px;
+            background: none;
+            border: none;
+            font-size: 24px;
+            color: #555;
+            cursor: pointer;
+        }
+        .main-container {
+            padding: 20px;
+            max-width: 800px;
+            margin: 0 auto;
+            position: relative;
+        }
+        .submission-item {
+            background-color: #fff;
+            padding: 15px;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            margin-bottom: 15px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .submission-info {
+            flex-grow: 1;
+        }
+        .submission-info h4 {
+            margin: 0 0 5px 0;
+            font-size: 18px;
+            color: #007bff;
+        }
+        .submission-info p {
+            margin: 0;
+            font-size: 14px;
+            color: #666;
+        }
+        .submission-actions button {
+            padding: 8px 12px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            margin-left: 10px;
+        }
+        .approve-btn {
+            background-color: #28a745;
+            color: white;
+        }
+        .reject-btn {
+            background-color: #dc3545;
+            color: white;
+        }
+        .status-badge {
+            font-weight: bold;
+            padding: 5px 10px;
+            border-radius: 12px;
+            font-size: 12px;
+        }
+        .status-pending {
+            background-color: #ffc107;
+            color: #333;
+        }
+        .status-approved {
+            background-color: #28a745;
+            color: white;
+        }
+        .status-rejected {
+            background-color: #dc3545;
+            color: white;
+        }
+
+        /* Notification Styles */
+        .notification-container {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 1000;
+        }
+        .notification {
+            background-color: #333;
+            color: white;
+            padding: 15px 20px;
+            border-radius: 5px;
+            margin-bottom: 10px;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.5s ease-in-out, visibility 0s linear 0.5s;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+            min-width: 250px;
+            text-align: center;
+        }
+        .notification.show {
+            opacity: 1;
+            visibility: visible;
+            transition: opacity 0.5s ease-in-out;
+        }
+        .notification.success {
+            background-color: #28a745;
+        }
+        .notification.error {
+            background-color: #dc3545;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="header">
+        <button class="back-btn" onclick="history.back()"><i class="fas fa-arrow-left"></i></button>
+        <h1>Jobs History</h1>
+    </div>
+
+    <div class="main-container">
+        <div id="submissions-list">
+            <p>Loading job submissions...</p>
+        </div>
+    </div>
+    
+    <div class="notification-container" id="notification-container"></div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js";
+        import { getDatabase, ref, onValue, update, get, child } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-database.js";
+
+        // আপনার Firebase কনফিগারেশন
+        const firebaseConfig = {
+            apiKey: "AIzaSyCS5HN0yT3e7el75fBc2HLcLmTnrcQZ7bc",
+            authDomain: "exsurvey-1c78a.firebaseapp.com",
+            databaseURL: "https://exsurvey-1c78a-default-rtdb.firebaseio.com",
+            projectId: "exsurvey-1c78a",
+            storageBucket: "exsurvey-1c78a.firebasestorage.app",
+            messagingSenderId: "754959615386",
+            appId: "1:754959615386:web:65c390db232a7dafd3e623",
+            measurementId: "G-8SQNS2DLBT"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const database = getDatabase(app);
+        const dbRef = ref(database);
+        const submissionsRef = ref(database, 'job_history');
+        const jobsRef = ref(database, 'jobs');
+
+        // Function to format timestamp to a readable date and time
+        const formatTimestamp = (timestamp) => {
+            const date = new Date(timestamp);
+            return date.toLocaleString('en-US', {
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit',
+                second: '2-digit'
+            });
+        };
+
+        // Function to show a temporary notification
+        const showNotification = (message, type) => {
+            const container = document.getElementById('notification-container');
+            const notification = document.createElement('div');
+            notification.className = `notification ${type}`;
+            notification.textContent = message;
+
+            container.appendChild(notification);
+            
+            setTimeout(() => {
+                notification.classList.add('show');
+            }, 10);
+
+            setTimeout(() => {
+                notification.classList.remove('show');
+                notification.addEventListener('transitionend', () => {
+                    notification.remove();
+                }, { once: true });
+            }, 3000); // Hide after 3 seconds
+        };
+
+        const loadSubmissions = () => {
+            onValue(submissionsRef, (snapshot) => {
+                const submissionsList = document.getElementById('submissions-list');
+                submissionsList.innerHTML = '';
+                if (snapshot.exists()) {
+                    const submissions = snapshot.val();
+                    const pendingSubmissions = Object.entries(submissions).filter(([key, value]) => {
+                        return (value.status || 'Pending') === 'Pending';
+                    });
+
+                    onValue(jobsRef, (jobsSnapshot) => {
+                        const jobs = jobsSnapshot.val() || {};
+                        
+                        // Sort pending submissions by time, newest first
+                        pendingSubmissions.sort((a, b) => {
+                            return (b[1].timestamp || 0) - (a[1].timestamp || 0);
+                        });
+                        
+                        if (pendingSubmissions.length > 0) {
+                            pendingSubmissions.forEach(([key, submission]) => {
+                                const job = jobs[submission.jobId] || {};
+                                const submissionItem = document.createElement('div');
+                                submissionItem.className = 'submission-item';
+                                
+                                const statusClass = 'status-pending';
+                                const submissionTime = submission.timestamp ? formatTimestamp(submission.timestamp) : 'N/A';
+
+                                submissionItem.innerHTML = `
+                                    <div class="submission-info">
+                                        <h4>Job Title: ${job.title || 'N/A'}</h4>
+                                        <p><strong>Job ID:</strong> ${submission.jobId || 'N/A'}</p>
+                                        <p><strong>User ID:</strong> ${submission.userId || 'N/A'}</p>
+                                        <p><strong>Submission:</strong> ${submission.submission || 'N/A'}</p>
+                                        <p><strong>Submitted On:</strong> ${submissionTime}</p>
+                                        <p><strong>Status:</strong> <span class="status-badge ${statusClass}">${submission.status || 'Pending'}</span></p>
+                                    </div>
+                                    <div class="submission-actions">
+                                        <button class="approve-btn" data-key="${key}" data-user-id="${submission.userId}" data-job-balance="${job.balance || 0}">Approve</button>
+                                        <button class="reject-btn" data-key="${key}">Reject</button>
+                                    </div>
+                                `;
+                                submissionsList.appendChild(submissionItem);
+                            });
+                            addEventListeners();
+                        } else {
+                             submissionsList.innerHTML = '<p>No pending job submissions found.</p>';
+                        }
+                    }, { onlyOnce: true });
+                } else {
+                    submissionsList.innerHTML = '<p>No job submissions found.</p>';
+                }
+            });
+        };
+
+        const addEventListeners = () => {
+            document.querySelectorAll('.approve-btn').forEach(button => {
+                button.addEventListener('click', (e) => {
+                    const key = e.target.dataset.key;
+                    const userId = e.target.dataset.userId;
+                    const jobBalance = parseFloat(e.target.dataset.jobBalance);
+
+                    if (!userId) {
+                        showNotification("User ID is missing from this submission. Cannot update balance.", "error");
+                        return;
+                    }
+
+                    // Disable the button to prevent multiple clicks
+                    e.target.disabled = true;
+
+                    updateSubmissionStatus(key, 'Approved', userId, jobBalance);
+                });
+            });
+
+            document.querySelectorAll('.reject-btn').forEach(button => {
+                button.addEventListener('click', (e) => {
+                    const key = e.target.dataset.key;
+                    updateSubmissionStatus(key, 'Rejected');
+                });
+            });
+        };
+
+        const updateSubmissionStatus = (key, status, userId = null, balance = 0) => {
+            if (status === 'Approved' && userId) {
+                // Fetch the current user balance and then update
+                get(child(dbRef, `users/${userId}/balance`)).then((snapshot) => {
+                    const currentBalance = snapshot.val() || 0;
+                    const newBalance = currentBalance + balance;
+
+                    const updates = {};
+                    updates[`job_history/${key}/status`] = status;
+                    updates[`users/${userId}/balance`] = newBalance;
+
+                    update(ref(database), updates)
+                        .then(() => {
+                            showNotification(`Submission Approved! User's balance updated.`, "success");
+                        })
+                        .catch((error) => {
+                            showNotification("Failed to update status and balance. Please try again.", "error");
+                            console.error("Error updating status and balance:", error);
+                        });
+                }).catch((error) => {
+                    showNotification("Failed to fetch user balance. Please try again.", "error");
+                    console.error("Error fetching user balance:", error);
+                });
+            } else {
+                const updates = {};
+                updates[`job_history/${key}/status`] = status;
+
+                update(ref(database), updates)
+                    .then(() => {
+                        showNotification(`Submission Rejected.`, "success");
+                    })
+                    .catch((error) => {
+                        showNotification("Failed to update status. Please try again.", "error");
+                        console.error("Error updating status:", error);
+                    });
+            }
+        };
+
+        loadSubmissions();
+    </script>
+</body>
+</html>

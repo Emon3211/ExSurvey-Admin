@@ -1,0 +1,420 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Panel - Job Management</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f9;
+            margin: 0;
+            padding: 20px;
+        }
+        .header {
+            display: flex;
+            align-items: center;
+            justify-content: flex-start;
+            margin-bottom: 20px;
+            position: relative;
+        }
+        .back-btn {
+            background-color: #333;
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            font-size: 16px;
+            cursor: pointer;
+            border-radius: 5px;
+            margin-right: 20px;
+        }
+        .admin-container {
+            max-width: 800px;
+            margin: 0 auto;
+            background-color: #ffffff;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+        h2 {
+            text-align: center;
+            color: #333;
+            margin-bottom: 20px;
+        }
+        .form-section {
+            border: 1px solid #ddd;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 30px;
+        }
+        .form-section h3 {
+            margin-top: 0;
+            color: #007bff;
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        .form-group input, .form-group textarea, .form-group select {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            box-sizing: border-box;
+        }
+        .form-group textarea {
+            resize: vertical;
+        }
+        .btn-submit {
+            background-color: #28a745;
+            color: white;
+            padding: 12px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            width: 100%;
+        }
+        .job-list {
+            margin-top: 20px;
+        }
+        .job-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px;
+            border: 1px solid #eee;
+            border-radius: 5px;
+            margin-bottom: 10px;
+        }
+        .job-info {
+            flex-grow: 1;
+        }
+        .job-title {
+            font-weight: bold;
+            font-size: 18px;
+        }
+        .job-actions {
+            display: flex;
+            gap: 10px;
+        }
+        .job-actions button {
+            padding: 8px 12px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        .edit-btn {
+            background-color: #ffc107;
+            color: black;
+        }
+        .delete-btn {
+            background-color: #dc3545;
+            color: white;
+        }
+        /* New CSS for the message area */
+        .message {
+            text-align: center;
+            padding: 10px;
+            margin-bottom: 15px;
+            border-radius: 5px;
+            font-weight: bold;
+        }
+        .message.success {
+            background-color: #d4edda;
+            color: #155724;
+        }
+        .message.error {
+            background-color: #f8d7da;
+            color: #721c24;
+        }
+        /* Confirmation Modal */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgba(0,0,0,0.4);
+            justify-content: center;
+            align-items: center;
+        }
+        .modal-content {
+            background-color: #fefefe;
+            padding: 20px;
+            border: 1px solid #888;
+            border-radius: 8px;
+            width: 80%;
+            max-width: 300px;
+            text-align: center;
+        }
+        .modal-buttons {
+            margin-top: 20px;
+            display: flex;
+            justify-content: space-around;
+        }
+        .modal-buttons button {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+        .modal-confirm {
+            background-color: #dc3545;
+            color: white;
+        }
+        .modal-cancel {
+            background-color: #6c757d;
+            color: white;
+        }
+    </style>
+</head>
+<body>
+
+<div class="header">
+    <button class="back-btn" onclick="history.back()">Back</button>
+</div>
+
+<div class="admin-container">
+    <h2>Job Management Panel</h2>
+    
+    <div class="form-section">
+        <h3>Add New Job</h3>
+        <form id="jobForm">
+            <input type="hidden" id="jobId">
+            <div id="messageArea" class="message" style="display: none;"></div>
+            <div class="form-group">
+                <label for="jobTitle">Job Title:</label>
+                <input type="text" id="jobTitle" required>
+            </div>
+            <div class="form-group">
+                <label for="jobCategory">Category:</label>
+                <select id="jobCategory" required>
+                    <option value="micro">Micro Jobs</option>
+                    <option value="like">Like Jobs</option>
+                    <option value="follow">Follow Jobs</option>
+                    <option value="comment">Comment Jobs</option>
+                    <option value="share">Share Jobs</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="jobDescription">Description:</label>
+                <textarea id="jobDescription" rows="2" required></textarea>
+            </div>
+            <div class="form-group">
+                <label for="jobBalance">Balance (in $):</label>
+                <input type="number" id="jobBalance" step="0.01" required>
+            </div>
+            <div class="form-group">
+                <label for="jobLink">Job Link:</label>
+                <input type="url" id="jobLink" placeholder="e.g., https://example.com/job">
+            </div>
+            <div class="form-group">
+                <label for="jobInstructions">Instructions (each on a new line):</label>
+                <textarea id="jobInstructions" rows="4" placeholder="1. First instruction&#10;2. Second instruction&#10;3. Third instruction" required></textarea>
+            </div>
+            <button type="submit" class="btn-submit" id="submitBtn">Add Job</button>
+        </form>
+    </div>
+
+    <div class="job-list">
+        <h3>Current Jobs</h3>
+        <div id="jobsList">
+            </div>
+    </div>
+</div>
+
+<div id="deleteModal" class="modal">
+    <div class="modal-content">
+        <p>Are you sure you want to delete this job?</p>
+        <div class="modal-buttons">
+            <button id="confirmDelete" class="modal-confirm">Delete</button>
+            <button id="cancelDelete" class="modal-cancel">Cancel</button>
+        </div>
+    </div>
+</div>
+
+<script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js";
+    import { getDatabase, ref, push, onValue, update, remove } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-database.js";
+
+    // Firebase কনফিগারেশন
+    const firebaseConfig = {
+      apiKey: "AIzaSyCS5HN0yT3e7el75fBc2HLcLmTnrcQZ7bc",
+      authDomain: "exsurvey-1c78a.firebaseapp.com",
+      databaseURL: "https://exsurvey-1c78a-default-rtdb.firebaseio.com",
+      projectId: "exsurvey-1c78a",
+      storageBucket: "exsurvey-1c78a.firebasestorage.app",
+      messagingSenderId: "754959615386",
+      appId: "1:754959615386:web:65c390db232a7dafd3e623",
+      measurementId: "G-8SQNS2DLBT"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const database = getDatabase(app);
+    const jobsRef = ref(database, 'jobs');
+
+    const form = document.getElementById('jobForm');
+    const jobTitleInput = document.getElementById('jobTitle');
+    const jobCategoryInput = document.getElementById('jobCategory');
+    const jobDescriptionInput = document.getElementById('jobDescription');
+    const jobBalanceInput = document.getElementById('jobBalance');
+    const jobLinkInput = document.getElementById('jobLink');
+    const jobInstructionsInput = document.getElementById('jobInstructions');
+    const jobIdInput = document.getElementById('jobId');
+    const submitBtn = document.getElementById('submitBtn');
+    const jobsListDiv = document.getElementById('jobsList');
+    const messageArea = document.getElementById('messageArea');
+
+    // Modal elements
+    const deleteModal = document.getElementById('deleteModal');
+    const confirmDeleteBtn = document.getElementById('confirmDelete');
+    const cancelDeleteBtn = document.getElementById('cancelDelete');
+    let jobToDeleteKey = null;
+
+    // Show a message on the page
+    function showMessage(message, type) {
+        messageArea.textContent = message;
+        messageArea.className = `message ${type}`;
+        messageArea.style.display = 'block';
+        setTimeout(() => {
+            messageArea.style.display = 'none';
+        }, 5000); // Hide after 5 seconds
+    }
+
+    // Display jobs from Firebase
+    onValue(jobsRef, (snapshot) => {
+        jobsListDiv.innerHTML = '';
+        if (snapshot.exists()) {
+            snapshot.forEach(childSnapshot => {
+                const job = childSnapshot.val();
+                const key = childSnapshot.key;
+                const jobItem = document.createElement('div');
+                jobItem.className = 'job-item';
+                jobItem.innerHTML = `
+                    <div class="job-info">
+                        <div class="job-title">${job.title}</div>
+                        <div>Category: ${job.category} | Balance: $${job.balance ? job.balance.toFixed(2) : '0.00'}</div>
+                    </div>
+                    <div class="job-actions">
+                        <button class="edit-btn" data-key="${key}">Edit</button>
+                        <button class="delete-btn" data-key="${key}">Delete</button>
+                    </div>
+                `;
+                jobsListDiv.appendChild(jobItem);
+            });
+            addEventListeners();
+        } else {
+            jobsListDiv.innerHTML = '<p>No jobs available.</p>';
+        }
+    });
+
+    // Add or Update a job
+    form.addEventListener('submit', (e) => {
+        e.preventDefault();
+        
+        const instructionsArray = jobInstructionsInput.value.split('\n').filter(line => line.trim() !== '');
+
+        const jobData = {
+            title: jobTitleInput.value,
+            category: jobCategoryInput.value,
+            description: jobDescriptionInput.value,
+            balance: parseFloat(jobBalanceInput.value),
+            jobLink: jobLinkInput.value || null,
+            instructions: instructionsArray,
+        };
+
+        const jobId = jobIdInput.value;
+        if (jobId) {
+            // Update an existing job
+            update(ref(database, `jobs/${jobId}`), jobData)
+                .then(() => {
+                    showMessage('Job updated successfully!', 'success');
+                    resetForm();
+                })
+                .catch(error => {
+                    console.error("Error updating job:", error);
+                    showMessage("Failed to update job.", 'error');
+                });
+        } else {
+            // Add a new job
+            push(jobsRef, jobData)
+                .then(() => {
+                    showMessage('Job added successfully!', 'success');
+                    resetForm();
+                })
+                .catch(error => {
+                    console.error("Error adding job:", error);
+                    showMessage("Failed to add job.", 'error');
+                });
+        }
+    });
+
+    // Delete job function
+    const deleteJob = (key) => {
+        remove(ref(database, `jobs/${key}`))
+            .then(() => showMessage('Job deleted successfully!', 'success'))
+            .catch(error => {
+                console.error("Error deleting job:", error);
+                showMessage("Failed to delete job.", 'error');
+            });
+    };
+
+    // Add event listeners for edit and delete buttons
+    const addEventListeners = () => {
+        document.querySelectorAll('.edit-btn').forEach(button => {
+            button.addEventListener('click', (e) => {
+                const key = e.target.dataset.key;
+                onValue(ref(database, `jobs/${key}`), (snapshot) => {
+                    const job = snapshot.val();
+                    jobTitleInput.value = job.title;
+                    jobCategoryInput.value = job.category;
+                    jobDescriptionInput.value = job.description;
+                    jobBalanceInput.value = job.balance;
+                    jobLinkInput.value = job.jobLink || '';
+                    jobInstructionsInput.value = job.instructions ? job.instructions.join('\n') : '';
+                    jobIdInput.value = key;
+                    submitBtn.textContent = 'Update Job';
+                }, { onlyOnce: true });
+            });
+        });
+
+        document.querySelectorAll('.delete-btn').forEach(button => {
+            button.addEventListener('click', (e) => {
+                jobToDeleteKey = e.target.dataset.key;
+                deleteModal.style.display = 'flex';
+            });
+        });
+    };
+
+    // Modal button event listeners
+    confirmDeleteBtn.addEventListener('click', () => {
+        if (jobToDeleteKey) {
+            deleteJob(jobToDeleteKey);
+            jobToDeleteKey = null;
+        }
+        deleteModal.style.display = 'none';
+    });
+
+    cancelDeleteBtn.addEventListener('click', () => {
+        jobToDeleteKey = null;
+        deleteModal.style.display = 'none';
+    });
+
+    const resetForm = () => {
+        form.reset();
+        jobIdInput.value = '';
+        submitBtn.textContent = 'Add Job';
+    };
+</script>
+
+</body>
+</html>

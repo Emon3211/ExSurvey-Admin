@@ -1,0 +1,393 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Login - ExSurvey</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f9;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+        }
+        .header {
+            background-color: #ffffff;
+            width: 100%;
+            padding: 20px;
+            text-align: center;
+            border-bottom: 2px solid #e0e0e0;
+            position: absolute;
+            top: 0;
+        }
+        .login-container {
+            background-color: #fff;
+            padding: 40px;
+            border-radius: 12px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+            width: 100%;
+            max-width: 400px;
+            text-align: center;
+            margin-top: 80px; /* Space from header */
+        }
+        .login-container h2 {
+            font-size: 28px;
+            color: #333;
+            margin-bottom: 25px;
+        }
+        .input-group {
+            margin-bottom: 20px;
+            text-align: left;
+        }
+        .input-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: bold;
+            color: #555;
+        }
+        .input-group input {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            font-size: 16px;
+            box-sizing: border-box;
+        }
+        .input-group input:focus {
+            outline: none;
+            border-color: #007bff;
+        }
+        .password-container {
+            position: relative;
+        }
+        .password-container .toggle-password {
+            position: absolute;
+            right: 15px;
+            top: 50%;
+            transform: translateY(-50%);
+            cursor: pointer;
+            color: #aaa;
+        }
+        .password-container .toggle-password:hover {
+            color: #555;
+        }
+        .login-btn {
+            width: 100%;
+            padding: 12px;
+            background-color: #007bff;
+            color: #fff;
+            border: none;
+            border-radius: 8px;
+            font-size: 18px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+        .login-btn:hover {
+            background-color: #0056b3;
+        }
+        .forgot-password-link {
+            display: block;
+            margin-top: 15px;
+            color: #007bff;
+            text-decoration: none;
+            font-size: 14px;
+            transition: color 0.3s ease;
+        }
+        .forgot-password-link:hover {
+            text-decoration: underline;
+        }
+        .footer {
+            margin-top: auto;
+            width: 100%;
+            text-align: center;
+            padding: 20px;
+            color: #999;
+        }
+        /* Modal Styles */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgba(0,0,0,0.4);
+            justify-content: center;
+            align-items: center;
+        }
+        .modal-content {
+            background-color: #fefefe;
+            padding: 25px;
+            border: 1px solid #888;
+            width: 80%;
+            max-width: 350px;
+            border-radius: 10px;
+            position: relative;
+            text-align: left;
+        }
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+        .modal-header h3 {
+            margin: 0;
+            font-size: 20px;
+        }
+        .close-modal {
+            color: #aaa;
+            font-size: 28px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+        .close-modal:hover, .close-modal:focus {
+            color: #000;
+        }
+        .modal-input {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            margin-bottom: 15px;
+        }
+        .modal-btn {
+            width: 100%;
+            padding: 10px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+        .modal-btn:hover {
+            background-color: #0056b3;
+        }
+        /* New CSS for on-page messages */
+        .message-container {
+            padding: 15px;
+            margin: 20px auto;
+            border-radius: 8px;
+            text-align: center;
+            font-size: 16px;
+            font-weight: bold;
+            max-width: 600px;
+            display: none; /* Initially hidden */
+        }
+        .message-success {
+            background-color: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        .message-error {
+            background-color: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+    </style>
+
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
+
+</head>
+<body>
+    <header class="header">
+        <h1>ExSurvey Admin Login</h1>
+    </header>
+
+    <div id="messageContainer" class="message-container">
+        <p id="messageText"></p>
+    </div>
+
+    <div class="login-container">
+        <h2>Admin Panel</h2>
+        <form id="adminLoginForm">
+            <div class="input-group">
+                <label for="emailOrUsername">Email or Username</label>
+                <input type="text" id="emailOrUsername" name="emailOrUsername" required>
+            </div>
+            <div class="input-group">
+                <label for="password">Password</label>
+                <div class="password-container">
+                    <input type="password" id="password" name="password" required>
+                    <i class="fas fa-eye-slash toggle-password" id="togglePassword"></i>
+                </div>
+            </div>
+            <button type="submit" class="login-btn">Login</button>
+            <a href="#" class="forgot-password-link" id="forgotPasswordLink">Forgot Password?</a>
+        </form>
+    </div>
+
+    <footer class="footer">
+        <p>© 2025 ExSurvey. All Rights Reserved.</p>
+    </footer>
+
+    <div id="forgotPasswordModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Forgot Password</h3>
+                <span class="close-modal" id="closeModal">&times;</span>
+            </div>
+            <form id="resetPasswordForm">
+                <p>Enter your email address to receive a password reset link.</p>
+                <input type="email" id="resetEmail" class="modal-input" placeholder="Enter your email" required>
+                <button type="submit" class="modal-btn">Send Reset Link</button>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        // Your Firebase configuration
+        const firebaseConfig = {
+          apiKey: "AIzaSyCS5HN0yT3e7el75fBc2HLcLmTnrcQZ7bc",
+          authDomain: "exsurvey-1c78a.firebaseapp.com",
+          databaseURL: "https://exsurvey-1c78a-default-rtdb.firebaseio.com",
+          projectId: "exsurvey-1c78a",
+          storageBucket: "exsurvey-1c78a.firebasestorage.app",
+          messagingSenderId: "754959615386",
+          appId: "1:754959615386:web:65c390db232a7dafd3e623",
+          measurementId: "G-8SQNS2DLBT"
+        };
+        
+        // Initialize Firebase
+        firebase.initializeApp(firebaseConfig);
+        const auth = firebase.auth();
+        const database = firebase.database();
+
+        const adminLoginForm = document.getElementById('adminLoginForm');
+        const emailOrUsernameInput = document.getElementById('emailOrUsername');
+        const passwordInput = document.getElementById('password');
+        const togglePassword = document.getElementById('togglePassword');
+        const forgotPasswordLink = document.getElementById('forgotPasswordLink');
+        const forgotPasswordModal = document.getElementById('forgotPasswordModal');
+        const closeModal = document.getElementById('closeModal');
+        const resetPasswordForm = document.getElementById('resetPasswordForm');
+        const resetEmailInput = document.getElementById('resetEmail');
+
+        // Function to display a message on the page
+        function displayMessage(message, type) {
+            const messageContainer = document.getElementById('messageContainer');
+            const messageText = document.getElementById('messageText');
+            
+            messageText.textContent = message;
+            messageContainer.className = 'message-container ' + (type === 'success' ? 'message-success' : 'message-error');
+            messageContainer.style.display = 'block';
+
+            setTimeout(() => {
+                messageContainer.style.display = 'none';
+            }, 5000);
+        }
+
+        // Toggle password visibility
+        togglePassword.addEventListener('click', () => {
+            const type = passwordInput.getAttribute('type') === 'password' ? 'text' : 'password';
+            passwordInput.setAttribute('type', type);
+            togglePassword.classList.toggle('fa-eye');
+            togglePassword.classList.toggle('fa-eye-slash');
+        });
+
+        adminLoginForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            const input = emailOrUsernameInput.value;
+            const password = passwordInput.value;
+            let email = input;
+
+            try {
+                // Check if input is a username
+                if (!input.includes('@')) {
+                    const usernameRef = database.ref('users').orderByChild('username').equalTo(input).limitToFirst(1);
+                    const snapshot = await usernameRef.once('value');
+                    if (snapshot.exists()) {
+                        const userData = Object.values(snapshot.val())[0];
+                        email = userData.email;
+                    } else {
+                        displayMessage("No user found with this username. Please try again.", "error");
+                        return;
+                    }
+                }
+
+                // Step 1: Log in with Firebase Authentication
+                const userCredential = await auth.signInWithEmailAndPassword(email, password);
+                const user = userCredential.user;
+
+                // Step 2: Check the user's admin status in the database
+                const userRef = database.ref('users/' + user.uid);
+                const snapshot = await userRef.once('value');
+                const userData = snapshot.val();
+
+                if (userData && userData.is_admin === true) {
+                    displayMessage("Admin login successful! Redirecting to the dashboard.", "success");
+                    setTimeout(() => {
+                        window.location.href = 'admin_dashboard.html'; // Redirect to admin dashboard
+                    }, 2000);
+                } else {
+                    // If the user is not an admin, log them out immediately
+                    await auth.signOut();
+                    displayMessage("Access denied. You do not have admin privileges.", "error");
+                }
+            } catch (error) {
+                // Handle various login errors from Firebase
+                switch (error.code) {
+                    case "auth/invalid-email":
+                        displayMessage("Invalid email format or username. Please check and try again.", "error");
+                        break;
+                    case "auth/user-disabled":
+                        displayMessage("Your account has been disabled. Please contact support.", "error");
+                        break;
+                    case "auth/user-not-found":
+                        displayMessage("No user found with this email. Please try again.", "error");
+                        break;
+                    case "auth/wrong-password":
+                        displayMessage("Incorrect password. Please try again.", "error");
+                        break;
+                    default:
+                        displayMessage("Login failed: " + error.message, "error");
+                        break;
+                }
+            }
+        });
+
+        // Open modal
+        forgotPasswordLink.addEventListener('click', (e) => {
+            e.preventDefault();
+            forgotPasswordModal.style.display = 'flex';
+        });
+
+        // Close modal
+        closeModal.addEventListener('click', () => {
+            forgotPasswordModal.style.display = 'none';
+        });
+
+        window.addEventListener('click', (e) => {
+            if (e.target === forgotPasswordModal) {
+                forgotPasswordModal.style.display = 'none';
+            }
+        });
+
+        // Handle password reset
+        resetPasswordForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const email = resetEmailInput.value;
+
+            try {
+                await auth.sendPasswordResetEmail(email);
+                displayMessage("Password reset email sent! Please check your inbox and spam folder.", "success");
+                forgotPasswordModal.style.display = 'none';
+            } catch (error) {
+                displayMessage("Error sending reset email: " + error.message, "error");
+            }
+        });
+    </script>
+</body>
+</html>

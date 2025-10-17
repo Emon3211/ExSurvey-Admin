@@ -1,0 +1,411 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Owner Panel: User Management</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        /* Custom styles to override Tailwind and improve aesthetics */
+        body {
+            font-family: 'Inter', sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #eef2f7;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+        }
+        .container {
+            background-color: #ffffff;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+            max-width: 800px;
+            width: 100%;
+        }
+        h2 {
+            color: #1e40af; /* Deep Blue */
+            text-align: center;
+            margin-bottom: 25px;
+            font-size: 1.75rem;
+            font-weight: 700;
+        }
+        .back-button, .search-button {
+            background-color: #3b82f6;
+            color: white;
+            padding: 10px 15px;
+            border: none;
+            border-radius: 8px;
+            text-decoration: none;
+            font-size: 16px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            transition: background-color 0.3s, transform 0.1s;
+            box-shadow: 0 4px #1d4ed8;
+        }
+        .back-button:hover, .search-button:hover {
+            background-color: #2563eb;
+            transform: translateY(1px);
+            box-shadow: 0 3px #1d4ed8;
+        }
+        .back-button:active, .search-button:active {
+            transform: translateY(4px);
+            box-shadow: 0 0 #1d4ed8;
+        }
+        .form-group input, .form-group select {
+            border: 1px solid #d1d5db;
+            border-radius: 8px;
+            padding: 12px;
+            font-size: 16px;
+        }
+        .search-area {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 25px;
+        }
+        .user-details {
+            border: 1px solid #bfdbfe;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            background-color: #eff6ff;
+            display: none; /* Initially hidden */
+        }
+        .user-details strong {
+            color: #1e40af;
+        }
+        .action-buttons button {
+            padding: 12px;
+            font-size: 16px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: background-color 0.3s, box-shadow 0.1s;
+        }
+        .save-btn {
+            background-color: #10b981; /* Emerald Green */
+            color: white;
+            box-shadow: 0 4px #047857;
+        }
+        .save-btn:hover {
+            background-color: #059669;
+            box-shadow: 0 3px #047857;
+        }
+        .remove-btn {
+            background-color: #f59e0b; /* Amber */
+            color: white;
+            box-shadow: 0 4px #b45309;
+        }
+        .remove-btn:hover {
+            background-color: #d97706;
+            box-shadow: 0 3px #b45309;
+        }
+        .message {
+            padding: 12px;
+            margin-bottom: 15px;
+            border-radius: 8px;
+            text-align: center;
+            font-weight: 600;
+            display: none;
+        }
+        .success {
+            background-color: #d1fae5;
+            color: #065f46;
+            border: 1px solid #34d399;
+        }
+        .error {
+            background-color: #fee2e2;
+            color: #991b1b;
+            border: 1px solid #f87171;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="header w-full max-w-2xl flex justify-start mb-6">
+        <button class="back-button" onclick="goBack()"><i class="fas fa-arrow-left" style="margin-right: 8px;"></i> Back to Dashboard</button>
+    </div>
+
+    <div class="container max-w-2xl">
+        <h2><i class="fas fa-shield-alt mr-2"></i> Owner Panel: User Role Management</h2>
+        <div id="message" class="message"></div>
+        <div id="loading" class="text-center font-semibold text-lg text-blue-600">Checking Owner Status...</div>
+        
+        <div id="managementPanel" style="display: none;">
+            <div class="search-area">
+                <input type="text" id="userEmailOrUID" placeholder="Enter User Email or UID" class="flex-grow">
+                <button onclick="searchUser()" class="search-button"><i class="fas fa-search mr-2"></i> Search User</button>
+            </div>
+
+            <div id="userDetails" class="user-details">
+                <h3 class="text-xl font-bold mb-3 text-gray-800">User Profile</h3>
+                <p><strong>UID:</strong> <span id="displayUID">N/A</span></p>
+                <p><strong>Email:</strong> <span id="displayEmail">N/A</span></p>
+                <p><strong>Username:</strong> <span id="displayUsername">N/A</span></p>
+                
+                <hr class="my-4 border-blue-200">
+                
+                <p class="mb-2"><strong>Current Admin Status:</strong> <span id="displayAdminStatus" class="font-bold">N/A</span></p>
+                <p class="mb-4"><strong>Current Role:</strong> <span id="displayRole" class="font-bold">N/A</span></p>
+                
+                <div class="form-group mt-5">
+                    <label for="setRole" class="block font-bold mb-2 text-gray-700">Set User Role:</label>
+                    <select id="setRole" class="w-full">
+                        <option value="regular">Regular User</option>
+                        <option value="Support">Support Admin</option>
+                        <option value="Account">Account Admin</option>
+                        <option value="Transaction">Transaction Admin</option>
+                        <option value="Task_Add">Task Add Admin</option>
+                    </select>
+                </div>
+
+                <div class="action-buttons mt-5 flex justify-between gap-3">
+                    <button class="save-btn flex-1 flex items-center justify-center" onclick="updateUserRole()"><i class="fas fa-save mr-2"></i> Save Changes</button>
+                    <button class="remove-btn flex-1 flex items-center justify-center" onclick="removeUserAdminStatus()"><i class="fas fa-user-times mr-2"></i> Reset to Regular</button>
+                </div>
+            </div>
+            
+            <div id="searchError" class="message error" style="display: none;">User not found or database error.</div>
+        </div>
+    </div>
+
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
+
+    <script>
+        // ⚠️ Replace with your actual Firebase config
+        const firebaseConfig = {
+            apiKey: "AIzaSyCS5HN0yT3e7el75fBc2HLcLmTnrcQZ7bc",
+            authDomain: "exsurvey-1c78a.firebaseapp.com",
+            databaseURL: "https://exsurvey-1c78a-default-rtdb.firebaseio.com",
+            projectId: "exsurvey-1c78a",
+            storageBucket: "exsurvey-1c78a.firebasestorage.app",
+            messagingSenderId: "754959615386",
+            appId: "1:754959615386:web:65c390db232a7dafd3e623",
+            measurementId: "G-8SQNS2DLBT"
+        };
+
+        firebase.initializeApp(firebaseConfig);
+        const auth = firebase.auth();
+        const database = firebase.database();
+        const usersRef = database.ref('users');
+
+        const loadingElement = document.getElementById('loading');
+        const messageElement = document.getElementById('message');
+        const managementPanel = document.getElementById('managementPanel');
+        const userDetailsDiv = document.getElementById('userDetails');
+        const searchErrorDiv = document.getElementById('searchError');
+        
+        let targetUserUID = null;
+        
+        // 🟢 Back Button Functionality: Checks history and returns
+        function goBack() {
+            if (window.history.length > 1) {
+                window.history.back();
+            } else {
+                // Fallback to a default page if no history
+                window.location.href = 'index.html'; 
+            }
+        }
+        
+        // --- AUTH & OWNER ACCESS CHECK (Based on is_admin: true for owner) ---
+        auth.onAuthStateChanged(user => {
+            loadingElement.style.display = 'block';
+
+            if (!user) {
+                showMessage("Access Denied. Please log in first.", "error");
+                setTimeout(() => { /* redirect logic removed to avoid breaking canvas preview */ }, 3000);
+                return;
+            }
+            
+            // Check if the current logged-in user has 'is_admin: true'
+            usersRef.child(user.uid).once('value')
+                .then(snapshot => {
+                    loadingElement.style.display = 'none';
+                    const userData = snapshot.val();
+                    
+                    if (userData && userData.is_admin === true) {
+                        // User is the Admin/Owner, grant full access
+                        managementPanel.style.display = 'block';
+                        showMessage("Owner Access Granted. You can manage user roles.", "success");
+                    } else {
+                        // Not the Owner
+                        loadingElement.style.display = 'none';
+                        showMessage("FATAL ERROR: Only the Owner can access this panel.", "error");
+                        console.error("Non-owner attempted to access the owner panel.");
+                        setTimeout(() => { /* redirect logic removed to avoid breaking canvas preview */ }, 3000);
+                    }
+                })
+                .catch(error => {
+                    loadingElement.style.display = 'none';
+                    showMessage("Error checking user privileges: " + error.message, "error");
+                    console.error("Firebase Error:", error);
+                });
+        });
+
+        // --- Search User Function ---
+        function searchUser() {
+            const query = document.getElementById('userEmailOrUID').value.trim();
+            userDetailsDiv.style.display = 'none';
+            searchErrorDiv.style.display = 'none';
+            targetUserUID = null;
+            
+            if (!query) {
+                showMessage("Please enter a User Email or UID.", "error");
+                return;
+            }
+            
+            showMessage("Searching for user...", "success");
+
+            // A typical UID is long and does not contain '@'
+            if (query.length > 10 && !query.includes('@')) {
+                loadUserData(query);
+            } 
+            // If it's an email
+            else if (query.includes('@')) {
+                searchUserByEmail(query);
+            } else {
+                showMessage("Invalid input. Please enter a full UID or Email.", "error");
+            }
+        }
+        
+        // --- Load User Data by UID ---
+        function loadUserData(uid) {
+            usersRef.child(uid).once('value')
+                .then(snapshot => {
+                    const userData = snapshot.val();
+                    if (userData) {
+                        displayUserDetails(uid, userData);
+                        showMessage(`User ${userData.username || uid} found.`, "success");
+                    } else {
+                        searchErrorDiv.style.display = 'block';
+                        showMessage("User not found with the given UID.", "error");
+                    }
+                })
+                .catch(error => {
+                    console.error("DB Error loading user:", error);
+                    searchErrorDiv.style.display = 'block';
+                    showMessage("Database error during search.", "error");
+                });
+        }
+        
+        // --- Search User by Email (Using Realtime DB query) ---
+        function searchUserByEmail(email) {
+            usersRef.orderByChild('email').equalTo(email).once('value')
+                .then(snapshot => {
+                    if (snapshot.exists()) {
+                        // Get the first (and should be only) result
+                        let uid = Object.keys(snapshot.val())[0];
+                        let userData = snapshot.val()[uid];
+                        displayUserDetails(uid, userData);
+                        showMessage(`User ${userData.username || email} found by email.`, "success");
+                    } else {
+                        searchErrorDiv.style.display = 'block';
+                        showMessage("User not found with the given Email.", "error");
+                    }
+                })
+                .catch(error => {
+                    console.error("DB Error searching by email:", error);
+                    searchErrorDiv.style.display = 'block';
+                    showMessage("Database error during email search.", "error");
+                });
+        }
+        
+        // --- Display User Details in Panel ---
+        function displayUserDetails(uid, data) {
+            targetUserUID = uid;
+            document.getElementById('displayUID').textContent = uid;
+            document.getElementById('displayEmail').textContent = data.email || 'N/A';
+            document.getElementById('displayUsername').textContent = data.username || 'N/A';
+            
+            const isAdmin = data.is_admin === true; 
+            const role = data.role || 'regular';
+            
+            document.getElementById('displayAdminStatus').textContent = isAdmin ? 'TRUE' : 'FALSE';
+            document.getElementById('displayAdminStatus').className = isAdmin ? 'text-green-600 font-extrabold' : 'text-red-600 font-extrabold';
+            document.getElementById('displayRole').textContent = role.toUpperCase();
+            
+            // Set the value of the dropdown based on the current role
+            const roleSelect = document.getElementById('setRole');
+            
+            // Check if the current role is an option, otherwise default to 'regular'
+            const optionExists = Array.from(roleSelect.options).some(opt => opt.value === role);
+            
+            roleSelect.value = optionExists ? role : 'regular';
+
+            userDetailsDiv.style.display = 'block';
+        }
+        
+        // --- Update Role Function ---
+        function updateUserRole() {
+            if (!targetUserUID) {
+                showMessage("Please search and select a user first.", "error");
+                return;
+            }
+            
+            const newRole = document.getElementById('setRole').value;
+            
+            // Determine is_admin status based on the selected role
+            // Any role other than 'regular' is considered an admin role
+            const isAdmin = newRole !== 'regular'; 
+
+            const updates = {
+                is_admin: isAdmin, 
+                role: newRole
+            };
+
+            usersRef.child(targetUserUID).update(updates)
+                .then(() => {
+                    showMessage(`Successfully updated ${targetUserUID}'s status. Admin: ${isAdmin}, Role: ${newRole.toUpperCase()}.`, "success");
+                    // Reload data to reflect changes
+                    loadUserData(targetUserUID); 
+                })
+                .catch(error => {
+                    console.error("Error updating user role:", error);
+                    showMessage("Error saving changes: " + error.message, "error");
+                });
+        }
+        
+        // --- Reset to Regular User Function (Redundant button, but kept for UX) ---
+        function removeUserAdminStatus() {
+            if (!targetUserUID) {
+                showMessage("Please search and select a user first.", "error");
+                return;
+            }
+            
+            const updates = {
+                is_admin: false, 
+                role: 'regular' 
+            };
+
+            usersRef.child(targetUserUID).update(updates)
+                .then(() => {
+                    showMessage(`Successfully reset role to 'Regular User' for ${targetUserUID}.`, "success");
+                    // Set the dropdown visually
+                    document.getElementById('setRole').value = 'regular';
+                    // Reload data to reflect changes
+                    loadUserData(targetUserUID); 
+                })
+                .catch(error => {
+                    console.error("Error resetting role:", error);
+                    showMessage("Error resetting role: " + error.message, "error");
+                });
+        }
+        
+        // --- Display Message Function ---
+        function showMessage(msg, type) {
+            messageElement.textContent = msg;
+            messageElement.className = `message ${type}`;
+            messageElement.style.display = 'block';
+            setTimeout(() => {
+                messageElement.style.display = 'none';
+            }, 5000);
+        }
+    </script>
+</body>
+</html>

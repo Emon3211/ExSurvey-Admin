@@ -326,7 +326,7 @@
                 const snapshot = await userRef.once('value');
                 const userData = snapshot.val();
 
-                if (userData && userData.owner === true) {
+                if (userData && userData.owner===true) {
                     displayMessage("Admin login successful! Redirecting to the dashboard.", "success");
                     setTimeout(() => {
                         window.location.href = 'admin_dashboard.html'; // Redirect to admin dashboard
